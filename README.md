@@ -1,1 +1,1 @@
-# ebooks-manager
+# ebook-manager

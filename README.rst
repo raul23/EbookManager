@@ -1,1 +1,0 @@
-/Users/nova/PycharmProjects/ebook-manager/docs/README.rst

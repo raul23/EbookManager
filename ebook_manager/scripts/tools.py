@@ -96,6 +96,32 @@ def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
     ipdb.set_trace()
     results1 = get_filenames(dirpath_set1, doc_types)
     results2 = get_filenames(dirpath_set2, doc_types)
+    whole_results = [results1, results2]
+
+    def show_results(results):
+        """TODO
+
+        Parameters
+        ----------
+        results
+
+        Returns
+        -------
+
+        """
+        # TODO: explain code
+        print("Number of valid files: {}".format(len(results.valid_fnames)))
+        print("Rejected files:")
+        [print("- {}".format(f)) for f in sorted(list(results.rejected_fnames))]
+        print("Rejected ext: {}".format(results.rejected_ext))
+
+    for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
+        print("Results for {}".format(dirpath))
+        show_results(whole_results[i])
+        print()
+
+    print("Differences between two sets of documents: {}".format(
+        results1.valid_fnames.symmetric_difference(results2.valid_fnames)))
     ipdb.set_trace()
 
 

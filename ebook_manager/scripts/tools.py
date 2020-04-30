@@ -250,7 +250,7 @@ def reset_group_documents_into_folders(metadata):
     return 0
 
 
-def show_results_of_documents(dirpath, doc_types=_doc_types):
+def show_results_about_documents(dirpath, doc_types=_doc_types):
     """
 
     Parameters

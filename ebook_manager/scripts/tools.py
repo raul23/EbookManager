@@ -25,6 +25,9 @@ _doc_types = ['azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub', 'gz', 'mobi',
 _upper_doc_types = [t.upper() for t in _doc_types]
 
 
+# TODO: add logging message at the start of each function
+
+
 def copy_documents(src_dirpath, dst_dirpath, doc_types=_doc_types):
     """TODO
 
@@ -46,6 +49,75 @@ def copy_documents(src_dirpath, dst_dirpath, doc_types=_doc_types):
             src_filepath = os.path.join(src_dirpath, filename)
             dst_filepath = os.path.join(dst_dirpath, filename)
             shutil.copyfile(src_filepath, dst_filepath)
+    return 0
+
+
+def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
+    """TODO
+
+    Parameters
+    ----------
+    dirpath_set1
+    dirpath_set2
+    doc_types
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    try:
+        results1 = get_filenames(dirpath_set1, doc_types)
+        results2 = get_filenames(dirpath_set2, doc_types)
+    except OSError as e:
+        print(e)
+        return 1
+    whole_results = [results1, results2]
+
+    def show_results(results):
+        """TODO
+
+        Parameters
+        ----------
+        results
+
+        Returns
+        -------
+
+        """
+        # TODO: explain code
+        print("Number of valid files: {}".format(len(results.valid_fnames)))
+        print("Rejected files:")
+        [print("- {}".format(f)) for f in sorted(list(results.rejected_fnames))]
+        print("Rejected ext: {}".format(results.rejected_ext))
+
+    for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
+        print("Results for set{}: {}".format(i+1, dirpath))
+        results = whole_results[i]
+        show_results(results)
+
+        other_idx = 1 if i == 0 else 0
+        print("Difference between set{} and set{}: {}".format(
+            i+1,
+            other_idx+1,
+            results.valid_fnames - whole_results[other_idx].valid_fnames))
+        print()
+    return 0
+
+
+def fix_extensions(dirpath, doc_types=_doc_types):
+    """TODO
+
+    Parameters
+    ----------
+    dirpath
+    doc_types
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
     return 0
 
 
@@ -79,70 +151,6 @@ def get_filenames(dirpath, doc_types=_doc_types):
     return results
 
 
-def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
-    """TODO
-
-    Parameters
-    ----------
-    dirpath_set1
-    dirpath_set2
-    doc_types
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    results1 = get_filenames(dirpath_set1, doc_types)
-    results2 = get_filenames(dirpath_set2, doc_types)
-    whole_results = [results1, results2]
-
-    def show_results(results):
-        """TODO
-
-        Parameters
-        ----------
-        results
-
-        Returns
-        -------
-
-        """
-        # TODO: explain code
-        print("Number of valid files: {}".format(len(results.valid_fnames)))
-        print("Rejected files:")
-        [print("- {}".format(f)) for f in sorted(list(results.rejected_fnames))]
-        print("Rejected ext: {}".format(results.rejected_ext))
-
-    for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
-        print("Results for set{}: {}".format(i+1, dirpath))
-        results = whole_results[i]
-        show_results(results)
-
-        other_idx = 1 if i == 0 else 0
-        print("Difference between set{} and set{}: {}".format(
-            i+1,
-            other_idx+1,
-            results.valid_fnames - whole_results[other_idx].valid_fnames))
-        print()
-
-
-def fix_extensions(dirpath, doc_types=_doc_types):
-    """TODO
-
-    Parameters
-    ----------
-    dirpath
-    doc_types
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    pass
-
-
 def group_documents_into_folders(src_dirpath, dst_dirpath, group_size=30,
                                  doc_types=_doc_types,
                                  prefix_fname='group_'):
@@ -162,14 +170,16 @@ def group_documents_into_folders(src_dirpath, dst_dirpath, group_size=30,
     """
     # TODO: explain code
     # TODO: use Unix command mv
+    metadata = namedtuple("metadata", "retcode src_dirpath folderpaths")
+    metadata.src_dirpath = src_dirpath
+    folderpaths = []
     # Get list of documents and keep valid document types
-    ipdb.set_trace()
     list_filenames = []
+    # TODO: use get_filenames()
     for filename in os.listdir(src_dirpath):
         ext = os.path.splitext(filename)[-1][1:]
         if ext in doc_types:
             list_filenames.append(filename)
-    ipdb.set_trace()
     # Group valid documents into folders
     group_id = 0
     for i in range(0, len(list_filenames), group_size):
@@ -179,13 +189,16 @@ def group_documents_into_folders(src_dirpath, dst_dirpath, group_size=30,
                                         "{}{}".format(prefix_fname, group_id))
         group_id += 1
         # TODO: use create_dir() from pyutils.genutils
-        # TODO: case where folder already exists
+        # TODO: case where group folder already exists
         pathlib.Path(group_folderpath).mkdir(parents=True)
+        folderpaths.append(group_folderpath)
         for filename in group:
             src_filepath = os.path.join(src_dirpath, filename)
             dst_filepath = os.path.join(group_folderpath, filename)
             shutil.move(src_filepath, dst_filepath)
-    return 0
+    metadata.retcode = 0
+    metadata.folderpaths = folderpaths
+    return metadata
 
 
 def modify_filenames(dirpath, doc_types=_doc_types):
@@ -206,6 +219,32 @@ def modify_filenames(dirpath, doc_types=_doc_types):
         # Remove parentheses and brackets at the beginning of the filename along
         # with their content
         pass
+    return 0
+
+
+def reset_group_documents_into_folders(metadata):
+    """TODO
+
+    Parameters
+    ----------
+    metadata
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    # TODO: add message if AssertError
+    assert metadata.retcode == 0
+    src_dirpath = metadata.src_dirpath
+    folderpaths = metadata.folderpaths
+    for group_folderpath in folderpaths:
+        for filename in os.listdir(group_folderpath):
+            src_filepath = os.path.join(group_folderpath, filename)
+            dst_filepath = os.path.join(src_dirpath, filename)
+            shutil.move(src_filepath, dst_filepath)
+        os.rmdir(group_folderpath)
+    return 0
 
 
 def setup_argparser():
@@ -333,9 +372,12 @@ if __name__ == '__main__':
         dirpath_set1=os.path.expanduser('~/Downloads'),
         dirpath_set2='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp',
     )
-    group_documents_into_folders(
-        src_dirpath=os.path.expanduser('~/Downloads'),
-        dst_dirpath=os.path.expanduser('~/Documents/ebooks/grouped_ebooks'))
+    metadata = group_documents_into_folders(
+        # src_dirpath=os.path.expanduser('~/Downloads'),
+        src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
+        dst_dirpath=os.path.expanduser('~/test/ebook_manager/grouped_docs'),
+        group_size=5)
+    reset_group_documents_into_folders(metadata)
     """
     retcode = main()
     msg = "\nProgram exited with <color>{}</color>".format(retcode)

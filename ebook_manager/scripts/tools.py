@@ -397,7 +397,7 @@ if __name__ == '__main__':
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
         dst_dirpath='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp')
     """
-    show_results_of_documents(
+    show_results_about_documents(
         dirpath=os.path.expanduser('~/Downloads'),
     )
     diff_sets_of_documents(

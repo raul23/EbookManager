@@ -41,15 +41,15 @@ def _get_filenames(dirpath, doc_types=_doc_types):
     """
     # TODO: explain code
     results = namedtuple("results", "valid_fnames rejected_fnames rejected_ext")
-    valid_filenames = set()
-    rejected_filenames = set()
+    valid_filenames = []
+    rejected_filenames = []
     rejected_ext = set()
     for filename in os.listdir(dirpath):
         ext = os.path.splitext(filename)[-1][1:]
         if ext in doc_types:
-            valid_filenames.add(filename)
+            valid_filenames.append(filename)
         else:
-            rejected_filenames.add(filename)
+            rejected_filenames.append(filename)
             rejected_ext.add(ext)
     results.valid_fnames = valid_filenames
     results.rejected_fnames = rejected_filenames
@@ -71,7 +71,7 @@ def _show_results(results):
     # TODO: explain code
     print("Number of valid files: {}".format(len(results.valid_fnames)))
     print("Rejected files:")
-    [print("- {}".format(f)) for f in sorted(list(results.rejected_fnames))]
+    [print("- {}".format(f)) for f in sorted(results.rejected_fnames)]
     print("Rejected ext: {}".format(results.rejected_ext))
 
 
@@ -144,10 +144,11 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
         _show_results(results)
 
         other_idx = 1 if i == 0 else 0
-        print("Difference between set{} and set{}: {}".format(
-            i+1,
-            other_idx+1,
-            results.valid_fnames - whole_results[other_idx].valid_fnames))
+        diff = set(results.valid_fnames) - \
+               set(whole_results[other_idx].valid_fnames)
+        print("Difference between set{} and set{}: {}".format(i+1,
+                                                              other_idx+1,
+                                                              diff))
         print()
     return 0
 
@@ -165,7 +166,6 @@ def fix_extensions(dirpath, doc_types=_doc_types):
 
     """
     # TODO: explain code
-    ipdb.set_trace()
     metadata = namedtuple("metadata", "retcode new_filepaths")
     metadata.new_filepaths = []
     new_filepaths = []
@@ -187,7 +187,6 @@ def fix_extensions(dirpath, doc_types=_doc_types):
                     continue
             else:
                 continue
-            ipdb.set_trace()
             new_filename = "{}.{}".format(root, ext)
             dst_filepath = os.path.join(dirpath, new_filename)
             shutil.move(src_filepath, dst_filepath)
@@ -216,19 +215,21 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     # TODO: explain code
     # TODO: use Unix command mv
     metadata = namedtuple("metadata", "retcode src_dirpath folderpaths")
+    ipdb.set_trace()
     metadata.src_dirpath = src_dirpath
     folderpaths = []
-    # Get list of documents and keep valid document types
-    list_filenames = []
-    # TODO: use get_filenames()
-    for filename in os.listdir(src_dirpath):
-        ext = os.path.splitext(filename)[-1][1:]
-        if ext in doc_types:
-            list_filenames.append(filename)
+    # Get list of documents and keep only valid documents (based on types)
+    try:
+        results = _get_filenames(src_dirpath, doc_types)
+    except OSError as e:
+        print(e)
+        return 1
+
+    valid_fnames = results.valid_fnames
     # Group valid documents into folders
     group_id = 0
-    for i in range(0, len(list_filenames), group_size):
-        group = list_filenames[i:i+group_size]
+    for i in range(0, len(valid_fnames), group_size):
+        group = valid_fnames[i:i+group_size]
         # Create folder for the group of documents
         group_folderpath = os.path.join(dst_dirpath,
                                         "{}{}".format(prefix_fname, group_id))
@@ -243,6 +244,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
             shutil.move(src_filepath, dst_filepath)
     metadata.folderpaths = folderpaths
     metadata.retcode = 0
+    ipdb.set_trace()
     return metadata
 
 
@@ -460,8 +462,9 @@ if __name__ == '__main__':
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
         dst_dirpath='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp')
     """
+    # Examples: Coup.PDF and [Borel Comprendre physique].pdf.sb-ae97b7c9-d1SEqI
     metadata = fix_extensions(os.path.expanduser('~/Downloads'))
-    undo_fix_extensions(metadata)
+    # undo_fix_extensions(metadata)
     show_results_about_docs(
         dirpath=os.path.expanduser('~/Downloads'),
     )

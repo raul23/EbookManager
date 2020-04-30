@@ -9,6 +9,7 @@ import os
 import pathlib
 import re
 import shutil
+from collections import namedtuple
 from logging import NullHandler
 
 import ipdb
@@ -48,7 +49,37 @@ def copy_documents(src_dirpath, dst_dirpath, doc_types=_doc_types):
     return 0
 
 
-def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types,):
+def get_filenames(dirpath, doc_types=_doc_types):
+    """TODO
+
+    Parameters
+    ----------
+    dirpath
+    doc_types
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    results = namedtuple("results", "valid_fnames rejected_fnames rejected_ext")
+    valid_filenames = set()
+    rejected_filenames = set()
+    rejected_ext = set()
+    for filename in os.listdir(dirpath):
+        ext = os.path.splitext(filename)[-1][1:]
+        if ext in doc_types:
+            valid_filenames.add(filename)
+        else:
+            rejected_filenames.add(filename)
+            rejected_ext.add(ext)
+    results.valid_fnames = valid_filenames
+    results.rejected_fnames = rejected_filenames
+    results.rejected_ext = rejected_ext
+    return results
+
+
+def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
     """TODO
 
     Parameters
@@ -63,36 +94,12 @@ def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types,):
     """
     # TODO: explain code
     ipdb.set_trace()
-    filenames1 = []
-    rejected_filenames1 = []
-    rejected_ext1 = set()
-    for filename in os.listdir(dirpath_set1):
-        ext = os.path.splitext(filename)[-1][1:]
-        if ext == 'sb-ae97b7c9-d1SEqI':
-            ipdb.set_trace()
-        if ext in doc_types:
-            filenames1.append(filename)
-        else:
-            rejected_filenames1.append(filename)
-            rejected_ext1.add(ext)
-
-    ipdb.set_trace()
-
-    filenames2 = []
-    rejected_filenames2 = []
-    rejected_ext2 = set()
-    for filename in os.listdir(dirpath_set2):
-        ext = os.path.splitext(filename)[-1][1:]
-        if ext in doc_types:
-            filenames2.append(filename)
-        else:
-            rejected_filenames2.append(filename)
-            rejected_ext2.add(ext)
-
+    results1 = get_filenames(dirpath_set1, doc_types)
+    results2 = get_filenames(dirpath_set2, doc_types)
     ipdb.set_trace()
 
 
-def fix_entensions(dirpath, doc_types=_doc_types):
+def fix_extensions(dirpath, doc_types=_doc_types):
     """TODO
 
     Parameters

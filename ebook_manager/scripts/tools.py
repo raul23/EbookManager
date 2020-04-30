@@ -22,7 +22,6 @@ logger.addHandler(NullHandler())
 
 _doc_types = ['azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub', 'gz', 'mobi', 'pdf',
               'rar', 'zip']
-_upper_doc_types = [t.upper() for t in _doc_types]
 
 
 # TODO: add logging message at the start of each function
@@ -76,7 +75,24 @@ def _show_results(results):
     print("Rejected ext: {}".format(results.rejected_ext))
 
 
-def copy_documents(src_dirpath, dst_dirpath, doc_types=_doc_types):
+def _split_filename(filename):
+    """TODO
+
+    Parameters
+    ----------
+    filename
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    root, ext = os.path.splitext(filename)
+    ext = ext[1:]
+    return root, ext
+
+
+def copy_docs(src_dirpath, dst_dirpath, doc_types=_doc_types):
     """TODO
 
     Parameters
@@ -100,7 +116,7 @@ def copy_documents(src_dirpath, dst_dirpath, doc_types=_doc_types):
     return 0
 
 
-def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
+def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
     """TODO
 
     Parameters
@@ -150,13 +166,39 @@ def fix_extensions(dirpath, doc_types=_doc_types):
     """
     # TODO: explain code
     ipdb.set_trace()
+    metadata = namedtuple("metadata", "retcode new_filepaths")
+    metadata.new_filepaths = []
+    new_filepaths = []
+    for filename in os.listdir(dirpath):
+        src_filepath = os.path.join(dirpath, filename)
+        root, ext = _split_filename(filename)
+        if os.path.isfile(src_filepath) and ext not in doc_types:
+            if ext.lower() in doc_types:
+                ext = ext.lower()
+            elif filename.count('.') > 1:
+                # Fix 2: remove everything after the extension
+                # e.g. file.pdf.sb1-383921a --> file.pdf
+                root2, ext2 = _split_filename(root)
+                ext2 = ext2.lower()
+                if ext2 in doc_types:
+                    root = root2
+                    ext = ext2
+                else:
+                    continue
+            else:
+                continue
+            ipdb.set_trace()
+            new_filename = "{}.{}".format(root, ext)
+            dst_filepath = os.path.join(dirpath, new_filename)
+            shutil.move(src_filepath, dst_filepath)
+            new_filepaths.append((src_filepath, dst_filepath))
+    metadata.new_filepaths = new_filepaths
+    metadata.retcode = 0
+    return metadata
 
-    return 0
 
-
-def group_documents_into_folders(src_dirpath, dst_dirpath, group_size=30,
-                                 doc_types=_doc_types,
-                                 prefix_fname='group_'):
+def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
+                            doc_types=_doc_types, prefix_fname='group_'):
     """TODO
 
     Parameters
@@ -199,8 +241,8 @@ def group_documents_into_folders(src_dirpath, dst_dirpath, group_size=30,
             src_filepath = os.path.join(src_dirpath, filename)
             dst_filepath = os.path.join(group_folderpath, filename)
             shutil.move(src_filepath, dst_filepath)
-    metadata.retcode = 0
     metadata.folderpaths = folderpaths
+    metadata.retcode = 0
     return metadata
 
 
@@ -225,32 +267,7 @@ def modify_filenames(dirpath, doc_types=_doc_types):
     return 0
 
 
-def reset_group_documents_into_folders(metadata):
-    """TODO
-
-    Parameters
-    ----------
-    metadata
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    # TODO: add message if AssertError
-    assert metadata.retcode == 0
-    src_dirpath = metadata.src_dirpath
-    folderpaths = metadata.folderpaths
-    for group_folderpath in folderpaths:
-        for filename in os.listdir(group_folderpath):
-            src_filepath = os.path.join(group_folderpath, filename)
-            dst_filepath = os.path.join(src_dirpath, filename)
-            shutil.move(src_filepath, dst_filepath)
-        os.rmdir(group_folderpath)
-    return 0
-
-
-def show_results_about_documents(dirpath, doc_types=_doc_types):
+def show_results_about_docs(dirpath, doc_types=_doc_types):
     """
 
     Parameters
@@ -273,6 +290,52 @@ def show_results_about_documents(dirpath, doc_types=_doc_types):
     _show_results(results)
     print()
 
+    return 0
+
+
+def undo_fix_extensions(metadata):
+    """TODO
+
+    Parameters
+    ----------
+    metadata
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    # TODO: add message if AssertError
+    ipdb.set_trace()
+    assert metadata.retcode == 0
+    new_filepaths = metadata.new_filepaths
+    for old_filepath, new_filepath in new_filepaths:
+        shutil.move(new_filepath, old_filepath)
+    return 0
+
+
+def undo_group_docs_into_folders(metadata):
+    """TODO
+
+    Parameters
+    ----------
+    metadata
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    # TODO: add message if AssertError
+    assert metadata.retcode == 0
+    src_dirpath = metadata.src_dirpath
+    folderpaths = metadata.folderpaths
+    for group_folderpath in folderpaths:
+        for filename in os.listdir(group_folderpath):
+            src_filepath = os.path.join(group_folderpath, filename)
+            dst_filepath = os.path.join(src_dirpath, filename)
+            shutil.move(src_filepath, dst_filepath)
+        os.rmdir(group_folderpath)
     return 0
 
 
@@ -397,20 +460,21 @@ if __name__ == '__main__':
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
         dst_dirpath='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp')
     """
-    show_results_about_documents(
+    metadata = fix_extensions(os.path.expanduser('~/Downloads'))
+    undo_fix_extensions(metadata)
+    show_results_about_docs(
         dirpath=os.path.expanduser('~/Downloads'),
     )
-    diff_sets_of_documents(
+    diff_sets_of_docs(
         dirpath_set1=os.path.expanduser('~/Downloads'),
         dirpath_set2='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp',
     )
-    fix_extensions(os.path.expanduser('~/Downloads'))
-    metadata = group_documents_into_folders(
+    metadata = group_docs_into_folders(
         # src_dirpath=os.path.expanduser('~/Downloads'),
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
         dst_dirpath=os.path.expanduser('~/test/ebook_manager/grouped_docs'),
         group_size=5)
-    reset_group_documents_into_folders(metadata)
+    undo_group_docs_into_folders(metadata)
     """
     retcode = main()
     msg = "\nProgram exited with <color>{}</color>".format(retcode)

@@ -93,7 +93,6 @@ def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
 
     """
     # TODO: explain code
-    ipdb.set_trace()
     results1 = get_filenames(dirpath_set1, doc_types)
     results2 = get_filenames(dirpath_set2, doc_types)
     whole_results = [results1, results2]
@@ -116,13 +115,16 @@ def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
         print("Rejected ext: {}".format(results.rejected_ext))
 
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
-        print("Results for {}".format(dirpath))
-        show_results(whole_results[i])
-        print()
+        print("Results for set{}: {}".format(i+1, dirpath))
+        results = whole_results[i]
+        show_results(results)
 
-    print("Differences between two sets of documents: {}".format(
-        results1.valid_fnames.symmetric_difference(results2.valid_fnames)))
-    ipdb.set_trace()
+        other_idx = 1 if i == 0 else 0
+        print("Difference between set{} and set{}: {}".format(
+            i+1,
+            other_idx+1,
+            results.valid_fnames - whole_results[other_idx].valid_fnames))
+        print()
 
 
 def fix_extensions(dirpath, doc_types=_doc_types):

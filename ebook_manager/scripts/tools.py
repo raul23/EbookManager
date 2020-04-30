@@ -28,6 +28,54 @@ _upper_doc_types = [t.upper() for t in _doc_types]
 # TODO: add logging message at the start of each function
 
 
+def _get_filenames(dirpath, doc_types=_doc_types):
+    """TODO
+
+    Parameters
+    ----------
+    dirpath
+    doc_types
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    results = namedtuple("results", "valid_fnames rejected_fnames rejected_ext")
+    valid_filenames = set()
+    rejected_filenames = set()
+    rejected_ext = set()
+    for filename in os.listdir(dirpath):
+        ext = os.path.splitext(filename)[-1][1:]
+        if ext in doc_types:
+            valid_filenames.add(filename)
+        else:
+            rejected_filenames.add(filename)
+            rejected_ext.add(ext)
+    results.valid_fnames = valid_filenames
+    results.rejected_fnames = rejected_filenames
+    results.rejected_ext = rejected_ext
+    return results
+
+
+def _show_results(results):
+    """TODO
+
+    Parameters
+    ----------
+    results
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    print("Number of valid files: {}".format(len(results.valid_fnames)))
+    print("Rejected files:")
+    [print("- {}".format(f)) for f in sorted(list(results.rejected_fnames))]
+    print("Rejected ext: {}".format(results.rejected_ext))
+
+
 def copy_documents(src_dirpath, dst_dirpath, doc_types=_doc_types):
     """TODO
 
@@ -67,34 +115,17 @@ def diff_sets_of_documents(dirpath_set1, dirpath_set2, doc_types=_doc_types):
     """
     # TODO: explain code
     try:
-        results1 = get_filenames(dirpath_set1, doc_types)
-        results2 = get_filenames(dirpath_set2, doc_types)
+        results1 = _get_filenames(dirpath_set1, doc_types)
+        results2 = _get_filenames(dirpath_set2, doc_types)
     except OSError as e:
         print(e)
         return 1
     whole_results = [results1, results2]
 
-    def show_results(results):
-        """TODO
-
-        Parameters
-        ----------
-        results
-
-        Returns
-        -------
-
-        """
-        # TODO: explain code
-        print("Number of valid files: {}".format(len(results.valid_fnames)))
-        print("Rejected files:")
-        [print("- {}".format(f)) for f in sorted(list(results.rejected_fnames))]
-        print("Rejected ext: {}".format(results.rejected_ext))
-
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
         print("Results for set{}: {}".format(i+1, dirpath))
         results = whole_results[i]
-        show_results(results)
+        _show_results(results)
 
         other_idx = 1 if i == 0 else 0
         print("Difference between set{} and set{}: {}".format(
@@ -118,37 +149,9 @@ def fix_extensions(dirpath, doc_types=_doc_types):
 
     """
     # TODO: explain code
+    ipdb.set_trace()
+
     return 0
-
-
-def get_filenames(dirpath, doc_types=_doc_types):
-    """TODO
-
-    Parameters
-    ----------
-    dirpath
-    doc_types
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    results = namedtuple("results", "valid_fnames rejected_fnames rejected_ext")
-    valid_filenames = set()
-    rejected_filenames = set()
-    rejected_ext = set()
-    for filename in os.listdir(dirpath):
-        ext = os.path.splitext(filename)[-1][1:]
-        if ext in doc_types:
-            valid_filenames.add(filename)
-        else:
-            rejected_filenames.add(filename)
-            rejected_ext.add(ext)
-    results.valid_fnames = valid_filenames
-    results.rejected_fnames = rejected_filenames
-    results.rejected_ext = rejected_ext
-    return results
 
 
 def group_documents_into_folders(src_dirpath, dst_dirpath, group_size=30,
@@ -244,6 +247,32 @@ def reset_group_documents_into_folders(metadata):
             dst_filepath = os.path.join(src_dirpath, filename)
             shutil.move(src_filepath, dst_filepath)
         os.rmdir(group_folderpath)
+    return 0
+
+
+def show_results_of_documents(dirpath, doc_types=_doc_types):
+    """
+
+    Parameters
+    ----------
+    dirpath
+    doc_types
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    try:
+        results = _get_filenames(dirpath, doc_types)
+    except OSError as e:
+        print(e)
+        return 1
+
+    print("Results for {}".format(dirpath))
+    _show_results(results)
+    print()
+
     return 0
 
 
@@ -368,10 +397,14 @@ if __name__ == '__main__':
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
         dst_dirpath='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp')
     """
+    show_results_of_documents(
+        dirpath=os.path.expanduser('~/Downloads'),
+    )
     diff_sets_of_documents(
         dirpath_set1=os.path.expanduser('~/Downloads'),
         dirpath_set2='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp',
     )
+    fix_extensions(os.path.expanduser('~/Downloads'))
     metadata = group_documents_into_folders(
         # src_dirpath=os.path.expanduser('~/Downloads'),
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),

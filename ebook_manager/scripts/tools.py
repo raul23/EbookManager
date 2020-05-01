@@ -16,6 +16,8 @@ from logging import NullHandler
 import ipdb
 
 from ebook_manager import __version__
+from pyutils import uninstall_colored_logger
+from pyutils.logutils import setup_basic_logger
 
 
 logger = logging.getLogger(__name__)
@@ -72,8 +74,11 @@ def _show_results(results):
     # TODO: explain code
     print("Number of valid files: {}".format(len(results.valid_fnames)))
     print("Rejected files:")
+    # TODO: log only some of the filenames if not verbose. Otherwise log
+    # the first 25
     [print("- {}".format(f)) for f in sorted(results.rejected_fnames)]
-    print("Rejected ext: {}".format(results.rejected_ext))
+    print("Rejected ext: {}".format(
+        None if not results.rejected_ext else results.rejected_ext))
 
 
 def _split_filename(filename):
@@ -147,10 +152,23 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
         other_idx = 1 if i == 0 else 0
         diff = set(results.valid_fnames) - \
                set(whole_results[other_idx].valid_fnames)
-        print("Difference between set{} and set{}: {}".format(i+1,
-                                                              other_idx+1,
-                                                              diff))
-        print()
+
+        print("There are {} differences between set{} and set{}".format(
+            len(diff),
+            i + 1,
+            other_idx + 1))
+        if len(diff) > 10:
+            print("Some of the differences between set{} and set{}:".format(
+                i + 1,
+                other_idx + 1))
+            [print("- {}".format(f)) for f in list(diff)[:10]]
+        elif len(diff) > 1:
+            print("Difference between set{} and set{}: {}".format(
+                i+1,
+                other_idx+1,
+                diff))
+        if i == 0:
+            print()
     return 0
 
 
@@ -264,6 +282,7 @@ def modify_filenames(dirpath, doc_types=_doc_types):
     -------
 
     """
+    # TODO: explain code
     # Iterate recursively through each folder within the `dirpath` directory
     ipdb.set_trace()
     for root, dirs, files in os.walk(dirpath):
@@ -349,9 +368,9 @@ def setup_argparser():
 
     Some of the important actions that can be performed with the script are:
 
-    - TODO,
-    - TODO or
-    - TODO.
+    - Fix documents extensions, or
+    - Group documents into folders,
+    - Modify filenames according to a template.
 
     Returns
     -------
@@ -365,18 +384,13 @@ def setup_argparser():
        <https://docs.python.org/3.7/library/argparse.html#argparse.Namespace>`_.
 
     """
-    # Help message that is used in various arguments
-    common_help = '''Provide 'log' (without the quotes) for the logging config 
-    file or 'main' (without the quotes) for the main config file.'''
     # Setup the parser
     parser = argparse.ArgumentParser(
         # usage="%(prog)s [OPTIONS]",
         prog=os.path.basename(__file__).split(".")[0],
         description='''\
-TODO.\n
-IMPORTANT: these are only some of the most important options. Open the main 
-config file to have access to the complete list of options, i.e. 
-%(prog)s -e main''',
+Useful tools to be used on documents such as fixing extensions, grouping 
+documents into folders, and modifying filenames based on a template.''',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     # ===============
     # General options
@@ -392,52 +406,67 @@ config file to have access to the complete list of options, i.e.
                         help="Don't print color codes in output")
     # help=argparse.SUPPRESS)
     # Group arguments that are closely related
-    # =============
-    # Cache options
-    # =============
-    cache_group = parser.add_argument_group('Cache options')
-    cache_group.add_argument(
-        "--cache-dir", dest="dir",
-        help='''Location in the filesystem where ebook_manager can store 
-        downloaded webpages permanently. By default ~/.cache/ebook_manager is
-        used.''')
-    cache_group.add_argument("--no-cache-dir", action="store_true",
-                             help="Disable caching")
-    cache_group.add_argument("--clr-cache-dir", action="store_true",
-                             help="Delete all cache files")
+    # ====================================
+    # Difference between sets of documents
+    # ====================================
+    diff_sets_group = parser.add_argument_group("Print differences between two "
+                                                "sets of documents")
+    diff_sets_group.add_argument(
+        "--diff_dirs", nargs=2, dest="diff_dirpaths",
+        help='''Directory paths to the first and second sets of documents.''')
+    # ==============
+    # Fix extensions
+    # ==============
+    fix_ext_group = parser.add_argument_group("Fix extensions of documents")
+    fix_ext_group.add_argument(
+        "-fix", "--fix_dir", dest="fix_dirpath",
+        help='''Directory path containing documents whose extensions will be 
+        checked and fixed.''')
     # ===============
     # Group documents
     # ===============
-    start_group = parser.add_argument_group('Group documents into folders')
-    start_group.add_argument(
-        "-s", "--start_scraper", action="store_true",
-        help='''Scrape lyrics from webpages and save them locally in a SQLite 
-        database''')
-    # ===========
-    # Edit config
-    # ===========
-    edit_group = parser.add_argument_group('Edit a configuration file')
-    edit_group.add_argument(
-        "-e", "--edit", choices=["log", "main"],
-        help="Edit a configuration file. {}".format(common_help))
-    edit_group.add_argument(
-        "-a", "--app-name", default=None, dest="app",
-        help='''Name of the application to use for editing the file. If no 
-        name is given, then the default application for opening this type of 
-        file will be used.''')
-    # =================
-    # Reset/Undo config
-    # =================
-    reset_group = parser.add_argument_group(
-        'Reset or undo a configuration file')
-    reset_group.add_argument(
-        "-r", "--reset", choices=["log", "main"],
-        help='''Reset a configuration file with factory default values. 
-        {}'''.format(common_help))
-    reset_group.add_argument(
-        "-u", "--undo", choices=["log", "main"],
-        help='''Undo the LAST RESET. Thus, the config file will be restored 
-        to what it was before the LAST reset. {}'''.format(common_help))
+    group_docs = parser.add_argument_group("Group documents into folders")
+    group_docs.add_argument(
+        "--group_dirs", nargs=2, dest="group_dirpaths",
+        help='''Source and destination directory paths.''')
+    group_docs.add_argument(
+        "--group_size", default=30, dest="group_size", type=int,
+        help='''Size for each group of documents.''')
+    group_docs.add_argument(
+        "-p", "--prefix", default='group_', dest="prefix_fname",
+        help='''Prefix to be used when naming the folders.''')
+    # ================
+    # Modify filenames
+    # ================
+    # TODO: add template in group's description
+    modify_group = parser.add_argument_group("Modify filenames based on the "
+                                             "template TEMPLATE")
+    modify_group.add_argument(
+        "-mod", "--modify_dir", dest="modify_dirpath",
+        help='''Directory path containing the documents whose filenames will 
+        be modified if necessary.''')
+    # ============
+    # Show results
+    # ============
+    show_group = parser.add_argument_group("Show basic results about documents "
+                                           "such as number of valid filenames "
+                                           "and rejected extensions")
+    show_group.add_argument(
+        "-show", "--show_dir", dest="show_dirpath",
+        help='''Directory path containing the documents whose filenames will 
+        be modified if necessary.''')
+    # ==========
+    # Undo tasks
+    # ==========
+    undo_group = parser.add_argument_group("Undo some of the tasks such as "
+                                           "fixing the extensions and grouping "
+                                           "documents")
+    undo_group.add_argument(
+        "--undo_fix", action="store_true",
+        help='''Undo the LAST fixing of extensions..''')
+    undo_group.add_argument(
+        "--undo_group", action="store_true",
+        help='''Undo the LAST grouping of documents''')
     return parser.parse_args()
 
 
@@ -446,8 +475,8 @@ def main():
 
     Some of the actions that the script can perform:
 
+    - Fix documents extensions, or
     - Group documents into folders,
-    - Save list of filenames, or
     - Modify filenames according to a template.
 
     Notes
@@ -455,20 +484,82 @@ def main():
     Only one action at a time can be performed.
 
     """
-
-    return 0
+    args = setup_argparser()
+    # ==============
+    # Logging config
+    # ==============
+    # NOTE: if quiet and verbose are both activated, only quiet will have an
+    # effect
+    if args.quiet:  # Logging disabled
+        # TODO: check why 2nd option is not already set to True by default
+        logger = setup_basic_logger(__name__, remove_all_initial_handlers=True)
+        logger.addHandler(NullHandler())
+    else:  # Logging enabled
+        if args.no_color:  # Color disabled
+            uninstall_colored_logger()
+        logger = setup_basic_logger(
+            name=__name__,
+            add_console_handler=True,
+            remove_all_initial_handlers=True)
+        if args.verbose:
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.INFO)
+    # =======
+    # Actions
+    # =======
+    retcode = 1
+    try:
+        # TODO: make it so that we can perform more than 1 action at a time
+        # NOTE: only one action at a time can be performed
+        if args.diff_dirpaths:
+            retcode = diff_sets_of_docs(args.diff_dirpaths[0],
+                                        args.diff_dirpaths[1])
+        elif args.fix_dirpath:
+            retcode = fix_extensions(args.fix_dirpath)
+        elif args.group_dirs:
+            retcode = group_docs_into_folders(args.group_dirs[0],
+                                              args.group_dirs[1],
+                                              args.group_size)
+        elif args.modify_dirpath:
+            retcode = modify_filenames(args.modify_dirpath)
+        elif args.show_dirpath:
+            retcode = show_results_about_docs(args.show_dirpath)
+        elif args.undo_fix:
+            retcode = undo_fix_extensions(None)
+        elif args.undo_group:
+            retcode = undo_group_docs_into_folders(None)
+        else:
+            # TODO: default when no action given is to start scraping?
+            print("No action selected: edit (-e), reset (-r) or start the "
+                  "scraper (-s)")
+    except (AssertionError, AttributeError, FileNotFoundError,
+            KeyboardInterrupt, OSError) as e:
+        # TODO: explain this line
+        # traceback.print_exc()
+        e = "<color>{}</color>".format(e)
+        if args.verbose:
+            logger.exception(e)
+        else:
+            logger.error(e)
+    finally:
+        return retcode
 
 
 if __name__ == '__main__':
+    retcode = main()
+    msg = "\nProgram exited with <color>{}</color>".format(retcode)
+    if retcode == 1:
+        logger.error(msg)
+    else:
+        logger.debug(msg)
     """
     copy_documents(
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
         dst_dirpath='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp')
-    """
     # Examples: Coup.PDF and [Borel Comprendre physique].pdf.sb-ae97b7c9-d1SEqI
     # metadata = fix_extensions(os.path.expanduser('~/Downloads'))
     # undo_fix_extensions(metadata)
-    """
     show_results_about_docs(
         dirpath=os.path.expanduser('~/Downloads'),
     )
@@ -476,7 +567,6 @@ if __name__ == '__main__':
         dirpath_set1=os.path.expanduser('~/Downloads'),
         dirpath_set2='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp',
     )
-    """
     metadata = group_docs_into_folders(
         # src_dirpath=os.path.expanduser('~/Downloads'),
         # dst_dirpath=os.path.expanduser('~/Documents/ebooks/grouped_docs'),
@@ -484,11 +574,4 @@ if __name__ == '__main__':
         dst_dirpath=os.path.expanduser('~/test/ebook_manager/grouped_docs'),
         group_size=5)
     undo_group_docs_into_folders(metadata)
-    """
-    retcode = main()
-    msg = "\nProgram exited with <color>{}</color>".format(retcode)
-    if retcode == 1:
-        logger.error(msg)
-    else:
-        logger.debug(msg)
     """

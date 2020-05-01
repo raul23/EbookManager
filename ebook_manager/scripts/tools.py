@@ -5,6 +5,7 @@
 
 import argparse
 import logging
+import math
 import os
 import pathlib
 import re
@@ -213,9 +214,8 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
 
     """
     # TODO: explain code
-    # TODO: use Unix command mv
+    # TODO: use mv command
     metadata = namedtuple("metadata", "retcode src_dirpath folderpaths")
-    ipdb.set_trace()
     metadata.src_dirpath = src_dirpath
     folderpaths = []
     # Get list of documents and keep only valid documents (based on types)
@@ -228,7 +228,12 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     valid_fnames = results.valid_fnames
     # Group valid documents into folders
     group_id = 0
+    n_groups = math.ceil(len(valid_fnames)/group_size)
+    print("Number of groups: ", n_groups)
+    print("Group size: ", group_size)
+    print()
     for i in range(0, len(valid_fnames), group_size):
+        print("Group {}".format(group_id))
         group = valid_fnames[i:i+group_size]
         # Create folder for the group of documents
         group_folderpath = os.path.join(dst_dirpath,
@@ -244,7 +249,6 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
             shutil.move(src_filepath, dst_filepath)
     metadata.folderpaths = folderpaths
     metadata.retcode = 0
-    ipdb.set_trace()
     return metadata
 
 
@@ -308,7 +312,6 @@ def undo_fix_extensions(metadata):
     """
     # TODO: explain code
     # TODO: add message if AssertError
-    ipdb.set_trace()
     assert metadata.retcode == 0
     new_filepaths = metadata.new_filepaths
     for old_filepath, new_filepath in new_filepaths:
@@ -463,8 +466,9 @@ if __name__ == '__main__':
         dst_dirpath='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp')
     """
     # Examples: Coup.PDF and [Borel Comprendre physique].pdf.sb-ae97b7c9-d1SEqI
-    metadata = fix_extensions(os.path.expanduser('~/Downloads'))
+    # metadata = fix_extensions(os.path.expanduser('~/Downloads'))
     # undo_fix_extensions(metadata)
+    """
     show_results_about_docs(
         dirpath=os.path.expanduser('~/Downloads'),
     )
@@ -472,8 +476,10 @@ if __name__ == '__main__':
         dirpath_set1=os.path.expanduser('~/Downloads'),
         dirpath_set2='/Volumes/Seagate Backup Plus Drive 3TB/ebooks/_tmp',
     )
+    """
     metadata = group_docs_into_folders(
         # src_dirpath=os.path.expanduser('~/Downloads'),
+        # dst_dirpath=os.path.expanduser('~/Documents/ebooks/grouped_docs'),
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),
         dst_dirpath=os.path.expanduser('~/test/ebook_manager/grouped_docs'),
         group_size=5)

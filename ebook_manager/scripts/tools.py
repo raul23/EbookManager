@@ -60,6 +60,29 @@ def _get_filenames(dirpath, doc_types=_doc_types):
     return results
 
 
+def _show_filenames_from_coll(coll, max_items=None, n_chars=100):
+    """TODO
+
+    Parameters
+    ----------
+    coll
+    max_items
+    n_chars
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    if isinstance(coll, set):
+        coll = list(coll)
+    if max_items is not None:
+        coll = coll[:max_items]
+    for fname in coll:
+        root, ext = _split_filename(fname)
+        print("- {}[...]{}.{}".format(root[:n_chars-10], root[-10:], ext))
+
+
 def _show_results(results):
     """TODO
 
@@ -76,7 +99,8 @@ def _show_results(results):
     print("Rejected files:")
     # TODO: log only some of the filenames if not verbose. Otherwise log
     # the first 25
-    [print("- {}".format(f)) for f in sorted(results.rejected_fnames)]
+    _show_filenames_from_coll(sorted(results.rejected_fnames))
+    [print("- {}".format(f[:100])) for f in sorted(results.rejected_fnames)]
     print("Rejected ext: {}".format(
         None if not results.rejected_ext else results.rejected_ext))
 
@@ -144,6 +168,7 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
         return 1
     whole_results = [results1, results2]
 
+    # TODO: reduce filename shown
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
         print("Results for set{}: {}".format(i+1, dirpath))
         results = whole_results[i]
@@ -157,16 +182,15 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
             len(diff),
             i + 1,
             other_idx + 1))
-        if len(diff) > 10:
-            print("Some of the differences between set{} and set{}:".format(
-                i + 1,
-                other_idx + 1))
-            [print("- {}".format(f)) for f in list(diff)[:10]]
-        elif len(diff) > 1:
-            print("Difference between set{} and set{}: {}".format(
+        if len(diff) > 1:
+            if len(diff) > 10:
+                msg = "Some of the differences between set{} and set{}:"
+            else:
+                msg = "Differences between set{} and set{}: {}"
+            print(msg.format(
                 i+1,
-                other_idx+1,
-                diff))
+                other_idx+1))
+            _show_filenames_from_coll(coll=diff, max_items=10)
         if i == 0:
             print()
     return 0

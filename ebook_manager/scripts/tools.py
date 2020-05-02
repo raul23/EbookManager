@@ -448,9 +448,9 @@ documents into folders, and modifying filenames based on a template.''',
                         help="Don't print color codes in output")
     # help=argparse.SUPPRESS)
     # Group arguments that are closely related
-    # ====================================
-    # Difference between sets of documents
-    # ====================================
+    # ======================================
+    # Difference between 2 sets of documents
+    # ======================================
     diff_sets_group = parser.add_argument_group("Print differences between two "
                                                 "sets of documents")
     diff_sets_group.add_argument(
@@ -556,6 +556,7 @@ def main():
     # Actions
     # =======
     retcode = 1
+    # ipdb.set_trace()
     try:
         # TODO: make it so that we can perform more than 1 action at a time
         # NOTE: only one action at a time can be performed
@@ -598,6 +599,7 @@ if __name__ == '__main__':
         logger.error(msg)
     else:
         logger.debug(msg)
+    # python -m ebook_manager.scripts.tools --diff_dirs ~/Downloads ~/Documents/ebooks/ebooks_01/
     """
     copy_documents(
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),

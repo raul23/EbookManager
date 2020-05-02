@@ -289,9 +289,10 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     # Group valid documents into folders
     group_id = 0
     n_groups = math.ceil(len(valid_fnames)/group_size)
-    logger.info("Number of groups: ", n_groups)
-    logger.info("Group size: ", group_size)
-    logger.info("")
+    logger.info("Number of valid documents: {}".format(len(valid_fnames)))
+    logger.info("Number of groups: {}".format(n_groups))
+    logger.info("Group size: {}".format(group_size))
+    logger.debug("")
     for i in range(0, len(valid_fnames), group_size):
         logger.debug("Group {}".format(group_id))
         group = valid_fnames[i:i+group_size]
@@ -454,7 +455,7 @@ documents into folders, and modifying filenames based on a template.''',
     diff_sets_group = parser.add_argument_group("Print differences between two "
                                                 "sets of documents")
     diff_sets_group.add_argument(
-        "--diff_dirs", nargs=2, dest="diff_dirpaths",
+        "--diff_dirs", nargs=2, dest="diff_dirpath",
         help='''Directory paths to the first and second sets of documents.''')
     # ==============
     # Fix extensions
@@ -469,7 +470,7 @@ documents into folders, and modifying filenames based on a template.''',
     # ===============
     group_docs = parser.add_argument_group("Group documents into folders")
     group_docs.add_argument(
-        "--group_dirs", nargs=2, dest="group_dirpaths",
+        "--group_dirs", nargs=2, dest="group_dirpath",
         help='''Source and destination directory paths.''')
     group_docs.add_argument(
         "--group_size", default=30, dest="group_size", type=int,
@@ -505,10 +506,10 @@ documents into folders, and modifying filenames based on a template.''',
                                            "documents")
     undo_group.add_argument(
         "--undo_fix", action="store_true",
-        help='''Undo the LAST fixing of extensions..''')
+        help='''Undo the LAST fixing of extensions.''')
     undo_group.add_argument(
         "--undo_group", action="store_true",
-        help='''Undo the LAST grouping of documents''')
+        help='''Undo the LAST grouping of documents.''')
     return parser.parse_args()
 
 
@@ -556,19 +557,24 @@ def main():
     # Actions
     # =======
     retcode = 1
-    # ipdb.set_trace()
     try:
         # TODO: make it so that we can perform more than 1 action at a time
         # NOTE: only one action at a time can be performed
-        if args.diff_dirpaths:
-            retcode = diff_sets_of_docs(args.diff_dirpaths[0],
-                                        args.diff_dirpaths[1])
+        if args.diff_dirpath:
+            retcode = diff_sets_of_docs(args.diff_dirpath[0],
+                                        args.diff_dirpath[1])
         elif args.fix_dirpath:
-            retcode = fix_extensions(args.fix_dirpath)
-        elif args.group_dirs:
-            retcode = group_docs_into_folders(args.group_dirs[0],
-                                              args.group_dirs[1],
-                                              args.group_size)
+            metadata = fix_extensions(args.fix_dirpath)
+            retcode = metadata.retcode
+            # TODO: remove soon
+            retcode = undo_fix_extensions(metadata)
+        elif args.group_dirpath:
+            metadata = group_docs_into_folders(args.group_dirpath[0],
+                                               args.group_dirpath[1],
+                                               args.group_size)
+            retcode = metadata.retcode
+            # TODO: remove soon
+            retcode = undo_group_docs_into_folders(metadata)
         elif args.modify_dirpath:
             retcode = modify_filenames(args.modify_dirpath)
         elif args.show_dirpath:
@@ -600,6 +606,8 @@ if __name__ == '__main__':
     else:
         logger.debug(msg)
     # python -m ebook_manager.scripts.tools --diff_dirs ~/Downloads ~/Documents/ebooks/ebooks_01/
+    # python -m ebook_manager.scripts.tools --fix_dir ~/test/ebook_manager/fix_extensions/
+    # python -m ebook_manager.scripts.tools --group_dirs ~/test/ebook_manager/ungrouped_docs/ ~/test/ebook_manager/grouped_docs/
     """
     copy_documents(
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),

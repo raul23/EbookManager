@@ -95,13 +95,13 @@ def _show_filenames_from_coll(coll, max_items=None, n_chars=100):
     return 0
 
 
-def _show_results(results, max_items=20):
+def _show_basic_fnames_results(results, max_items=20):
     """TODO
 
     Parameters
     ----------
     results
-    max_iteems
+    max_items
 
     Returns
     -------
@@ -192,7 +192,7 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
         print("Results for set{}: {}".format(i+1, dirpath))
         results = whole_results[i]
-        _show_results(results)
+        _show_basic_fnames_results(results)
 
         other_idx = 1 if i == 0 else 0
         diff = set(results.valid_fnames) - \
@@ -356,7 +356,7 @@ def show_results_about_docs(dirpath, doc_types=_doc_types):
         return 1
 
     print("Results for {}".format(dirpath))
-    _show_results(results)
+    _show_basic_fnames_results(results)
     print()
 
     return 0

@@ -31,7 +31,7 @@ _doc_types = ['azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub', 'gz', 'mobi',
 
 
 def _get_filenames(dirpath, doc_types=_doc_types):
-    """TODO
+    """TODO: filename rejected if it belongs to a directory
 
     Parameters
     ----------
@@ -49,7 +49,10 @@ def _get_filenames(dirpath, doc_types=_doc_types):
     rejected_ext = set()
     for filename in os.listdir(dirpath):
         ext = os.path.splitext(filename)[-1][1:]
-        if ext in doc_types:
+        if os.path.isdir(os.path.join(dirpath, filename)):
+            # Reject if filename is associated to a directory
+            continue
+        elif ext in doc_types:
             valid_filenames.append(filename)
         else:
             rejected_filenames.append(filename)
@@ -76,19 +79,29 @@ def _show_filenames_from_coll(coll, max_items=None, n_chars=100):
     # TODO: explain code
     if isinstance(coll, set):
         coll = list(coll)
-    if max_items is not None:
-        coll = coll[:max_items]
-    for fname in coll:
-        root, ext = _split_filename(fname)
-        print("- {}[...]{}.{}".format(root[:n_chars-10], root[-10:], ext))
+    if len(coll):
+        if max_items is not None:
+            coll = coll[:max_items]
+        for fname in coll:
+            root, ext = _split_filename(fname)
+            if ext:
+                new_fname = "- {}{}.{}".format(
+                    root[:n_chars] if len(root) > n_chars else root,
+                    "[...]" if len(root) > n_chars else "",
+                    ext)
+            else:
+                new_fname = "- {}".format(root)
+            print(new_fname)
+    return 0
 
 
-def _show_results(results):
+def _show_results(results, max_items=20):
     """TODO
 
     Parameters
     ----------
     results
+    max_iteems
 
     Returns
     -------
@@ -96,13 +109,20 @@ def _show_results(results):
     """
     # TODO: explain code
     print("Number of valid files: {}".format(len(results.valid_fnames)))
-    print("Rejected files:")
     # TODO: log only some of the filenames if not verbose. Otherwise log
     # the first 25
-    _show_filenames_from_coll(sorted(results.rejected_fnames))
-    [print("- {}".format(f[:100])) for f in sorted(results.rejected_fnames)]
-    print("Rejected ext: {}".format(
-        None if not results.rejected_ext else results.rejected_ext))
+    print("There are {} rejected files".format(len(results.rejected_fnames)))
+    if len(results.rejected_fnames) > max_items:
+        print("Some of the rejected files: ", end='')
+    elif len(results.rejected_fnames) > 0:
+        print("Rejected files: ", end='')
+    if results.rejected_fnames:
+        print()
+        _show_filenames_from_coll(sorted(results.rejected_fnames),
+                                  max_items=max_items)
+    print("There are {} rejected extensions".format(len(results.rejected_ext)))
+    if results.rejected_ext:
+        print("Rejected extensions: {}".format(results.rejected_ext))
 
 
 def _split_filename(filename):

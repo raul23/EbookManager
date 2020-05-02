@@ -15,7 +15,7 @@ from logging import NullHandler
 import ipdb
 
 from ebook_manager import __version__
-from pyutils import uninstall_colored_logger
+from pyutils import install_colored_logger, uninstall_colored_logger
 from pyutils.logutils import setup_basic_logger
 
 
@@ -29,7 +29,7 @@ _doc_types = ['azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub', 'gz', 'mobi',
 # TODO: add logging message at the start of each function
 
 
-def _get_filenames(dirpath, doc_types=_doc_types):
+def _get_fnames(dirpath, doc_types=_doc_types):
     """TODO: filename rejected if it belongs to a directory
 
     Parameters
@@ -62,7 +62,7 @@ def _get_filenames(dirpath, doc_types=_doc_types):
     return results
 
 
-def _show_filenames_from_coll(coll, max_items=None, n_chars=100):
+def _show_fnames_from_coll(coll, max_items=None, n_chars=100):
     """TODO
 
     Parameters
@@ -82,7 +82,7 @@ def _show_filenames_from_coll(coll, max_items=None, n_chars=100):
         if max_items is not None:
             coll = coll[:max_items]
         for fname in coll:
-            root, ext = _split_filename(fname)
+            root, ext = _split_fname(fname)
             if ext:
                 new_fname = "- {}{}.{}".format(
                     root[:n_chars] if len(root) > n_chars else root,
@@ -110,20 +110,29 @@ def _show_basic_fnames_results(results, max_items=20):
     logger.info("Number of valid files: {}".format(len(results.valid_fnames)))
     # TODO: log only some of the filenames if not verbose. Otherwise log
     # the first 25
-    logger.info("There are {} rejected files".format(len(results.rejected_fnames)))
-    if len(results.rejected_fnames) > max_items:
-        logger.info("Some of the rejected files: ")
-    elif len(results.rejected_fnames) > 0:
-        logger.info("Rejected files: ")
-    if results.rejected_fnames:
-        _show_filenames_from_coll(sorted(results.rejected_fnames),
-                                  max_items=max_items)
-    logger.info("There are {} rejected extensions".format(len(results.rejected_ext)))
-    if results.rejected_ext:
+    # TODO: simulate TypeError with results.rejected_fnames (no len)
+    nb_rejected_fnames = len(results.rejected_fnames)
+    if nb_rejected_fnames > 0:
+        logger.warning("<color>There are {} rejected files</color>".format(
+            nb_rejected_fnames))
+        if nb_rejected_fnames > max_items:
+            logger.info("Some of the rejected files: ")
+        else:
+            logger.info("Rejected files: ")
+        _show_fnames_from_coll(sorted(results.rejected_fnames),
+                               max_items=max_items)
+    else:
+        logger.info("There are 0 rejected files")
+    nb_rejected_exts = len(results.rejected_ext)
+    if nb_rejected_exts > 0:
+        logger.warning("<color>There are {} rejected extensions</color>".format(
+            nb_rejected_exts))
         logger.info("Rejected extensions: {}".format(results.rejected_ext))
+    else:
+        logger.info("There are 0 rejected extensions")
 
 
-def _split_filename(filename):
+def _split_fname(filename):
     """TODO
 
     Parameters
@@ -179,8 +188,8 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
     """
     # TODO: explain code
     try:
-        results1 = _get_filenames(dirpath_set1, doc_types)
-        results2 = _get_filenames(dirpath_set2, doc_types)
+        results1 = _get_fnames(dirpath_set1, doc_types)
+        results2 = _get_fnames(dirpath_set2, doc_types)
     except OSError as e:
         logger.error(e)
         return 1
@@ -208,7 +217,7 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
             logger.info(msg.format(
                 i+1,
                 other_idx+1))
-            _show_filenames_from_coll(coll=diff, max_items=10)
+            _show_fnames_from_coll(coll=diff, max_items=10)
         if i == 0:
             logger.info("")
     return 0
@@ -232,14 +241,14 @@ def fix_extensions(dirpath, doc_types=_doc_types):
     new_filepaths = []
     for filename in os.listdir(dirpath):
         src_filepath = os.path.join(dirpath, filename)
-        root, ext = _split_filename(filename)
+        root, ext = _split_fname(filename)
         if os.path.isfile(src_filepath) and ext not in doc_types:
             if ext.lower() in doc_types:
                 ext = ext.lower()
             elif filename.count('.') > 1:
                 # Fix 2: remove everything after the extension
                 # e.g. file.pdf.sb1-383921a --> file.pdf
-                root2, ext2 = _split_filename(root)
+                root2, ext2 = _split_fname(root)
                 ext2 = ext2.lower()
                 if ext2 in doc_types:
                     root = root2
@@ -280,7 +289,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     folderpaths = []
     # Get list of documents and keep only valid documents (based on types)
     try:
-        results = _get_filenames(src_dirpath, doc_types)
+        results = _get_fnames(src_dirpath, doc_types)
     except OSError as e:
         logger.error(e)
         return 1
@@ -313,7 +322,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     return metadata
 
 
-def modify_filenames(dirpath, doc_types=_doc_types):
+def modify_fnames(dirpath, doc_types=_doc_types):
     """TODO
 
     Parameters
@@ -335,6 +344,30 @@ def modify_filenames(dirpath, doc_types=_doc_types):
     return 0
 
 
+def _log_main_msg(msg, sign='='):
+    """TODO
+
+    Parameters
+    ----------
+    msg
+    sign
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    # 4 because of # at the beginning and end of middle message (+ space)
+    nb_signs = len(msg) + 4
+    signs = "<color>{}</color>".format(sign * nb_signs)
+    # Log first line of signs
+    logger.info(signs)
+    # Log middle message
+    logger.info("<color># {} #</color>".format(msg))
+    # Log second line of signs
+    logger.info(signs)
+
+
 def show_results_about_docs(dirpath, doc_types=_doc_types):
     """
 
@@ -348,15 +381,14 @@ def show_results_about_docs(dirpath, doc_types=_doc_types):
 
     """
     # TODO: explain code
+    _log_main_msg(msg="Show basic results about documents: {}".format(dirpath))
     try:
-        results = _get_filenames(dirpath, doc_types)
+        results = _get_fnames(dirpath, doc_types)
     except OSError as e:
         logger.error(e)
         return 1
 
-    logger.info("Results for {}".format(dirpath))
     _show_basic_fnames_results(results)
-    logger.info("")
     return 0
 
 
@@ -502,8 +534,9 @@ documents into folders, and modifying filenames based on a template.''',
     # Undo tasks
     # ==========
     undo_group = parser.add_argument_group("Undo some of the tasks such as "
-                                           "fixing the extensions and grouping "
-                                           "documents")
+                                           "unfixing the extensions and "
+                                           "ungrouping documents")
+    # TODO: implement these tasks
     undo_group.add_argument(
         "--undo_fix", action="store_true",
         help='''Undo the LAST fixing of extensions.''')
@@ -528,7 +561,9 @@ def main():
 
     """
     # TODO: explain code
+    # TODO: global logger?
     args = setup_argparser()
+    ipdb.set_trace()
     # ==============
     # Logging config
     # ==============
@@ -541,10 +576,7 @@ def main():
     else:  # Logging enabled
         if args.no_color:  # Color disabled
             uninstall_colored_logger()
-        else:
-            # TODO: install colored logger
-            pass
-        # Setup a basic CONSOLE logger
+        # Setup a basic CONSOLE logger with DEBUG as log level
         logger = setup_basic_logger(
             name=__name__,
             add_console_handler=True,
@@ -576,7 +608,7 @@ def main():
             # TODO: remove soon
             retcode = undo_group_docs_into_folders(metadata)
         elif args.modify_dirpath:
-            retcode = modify_filenames(args.modify_dirpath)
+            retcode = modify_fnames(args.modify_dirpath)
         elif args.show_dirpath:
             retcode = show_results_about_docs(args.show_dirpath)
         elif args.undo_fix:
@@ -608,6 +640,7 @@ if __name__ == '__main__':
     # python -m ebook_manager.scripts.tools --diff_dirs ~/Downloads ~/Documents/ebooks/ebooks_01/
     # python -m ebook_manager.scripts.tools --fix_dir ~/test/ebook_manager/fix_extensions/
     # python -m ebook_manager.scripts.tools --group_dirs ~/test/ebook_manager/ungrouped_docs/ ~/test/ebook_manager/grouped_docs/
+    # python -m ebook_manager.scripts.tools -show ~/Downloads/chrome_downloads/
     """
     copy_documents(
         src_dirpath=os.path.expanduser('~/test/ebook_manager/ungrouped_docs'),

@@ -291,7 +291,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     n_groups = math.ceil(len(valid_fnames)/group_size)
     logger.info("Number of groups: ", n_groups)
     logger.info("Group size: ", group_size)
-    logger.info("\n")
+    logger.info("")
     for i in range(0, len(valid_fnames), group_size):
         logger.debug("Group {}".format(group_id))
         group = valid_fnames[i:i+group_size]
@@ -355,7 +355,7 @@ def show_results_about_docs(dirpath, doc_types=_doc_types):
 
     logger.info("Results for {}".format(dirpath))
     _show_basic_fnames_results(results)
-    logger.info("\n")
+    logger.info("")
     return 0
 
 

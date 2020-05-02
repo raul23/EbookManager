@@ -8,7 +8,6 @@ import logging
 import math
 import os
 import pathlib
-import re
 import shutil
 from collections import namedtuple
 from logging import NullHandler
@@ -91,7 +90,7 @@ def _show_filenames_from_coll(coll, max_items=None, n_chars=100):
                     ext)
             else:
                 new_fname = "- {}".format(root)
-            print(new_fname)
+            logger.info(new_fname)
     return 0
 
 
@@ -108,21 +107,20 @@ def _show_basic_fnames_results(results, max_items=20):
 
     """
     # TODO: explain code
-    print("Number of valid files: {}".format(len(results.valid_fnames)))
+    logger.info("Number of valid files: {}".format(len(results.valid_fnames)))
     # TODO: log only some of the filenames if not verbose. Otherwise log
     # the first 25
-    print("There are {} rejected files".format(len(results.rejected_fnames)))
+    logger.info("There are {} rejected files".format(len(results.rejected_fnames)))
     if len(results.rejected_fnames) > max_items:
-        print("Some of the rejected files: ", end='')
+        logger.info("Some of the rejected files: ")
     elif len(results.rejected_fnames) > 0:
-        print("Rejected files: ", end='')
+        logger.info("Rejected files: ")
     if results.rejected_fnames:
-        print()
         _show_filenames_from_coll(sorted(results.rejected_fnames),
                                   max_items=max_items)
-    print("There are {} rejected extensions".format(len(results.rejected_ext)))
+    logger.info("There are {} rejected extensions".format(len(results.rejected_ext)))
     if results.rejected_ext:
-        print("Rejected extensions: {}".format(results.rejected_ext))
+        logger.info("Rejected extensions: {}".format(results.rejected_ext))
 
 
 def _split_filename(filename):
@@ -184,13 +182,13 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
         results1 = _get_filenames(dirpath_set1, doc_types)
         results2 = _get_filenames(dirpath_set2, doc_types)
     except OSError as e:
-        print(e)
+        logger.error(e)
         return 1
     whole_results = [results1, results2]
 
     # TODO: reduce filename shown
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
-        print("Results for set{}: {}".format(i+1, dirpath))
+        logger.info("Results for set{}: {}".format(i+1, dirpath))
         results = whole_results[i]
         _show_basic_fnames_results(results)
 
@@ -198,7 +196,7 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
         diff = set(results.valid_fnames) - \
                set(whole_results[other_idx].valid_fnames)
 
-        print("There are {} differences between set{} and set{}".format(
+        logger.info("There are {} differences between set{} and set{}".format(
             len(diff),
             i + 1,
             other_idx + 1))
@@ -207,12 +205,12 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
                 msg = "Some of the differences between set{} and set{}:"
             else:
                 msg = "Differences between set{} and set{}: {}"
-            print(msg.format(
+            logger.info(msg.format(
                 i+1,
                 other_idx+1))
             _show_filenames_from_coll(coll=diff, max_items=10)
         if i == 0:
-            print()
+            logger.info("")
     return 0
 
 
@@ -284,18 +282,18 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     try:
         results = _get_filenames(src_dirpath, doc_types)
     except OSError as e:
-        print(e)
+        logger.error(e)
         return 1
 
     valid_fnames = results.valid_fnames
     # Group valid documents into folders
     group_id = 0
     n_groups = math.ceil(len(valid_fnames)/group_size)
-    print("Number of groups: ", n_groups)
-    print("Group size: ", group_size)
-    print()
+    logger.info("Number of groups: ", n_groups)
+    logger.info("Group size: ", group_size)
+    logger.info("\n")
     for i in range(0, len(valid_fnames), group_size):
-        print("Group {}".format(group_id))
+        logger.debug("Group {}".format(group_id))
         group = valid_fnames[i:i+group_size]
         # Create folder for the group of documents
         group_folderpath = os.path.join(dst_dirpath,
@@ -352,13 +350,12 @@ def show_results_about_docs(dirpath, doc_types=_doc_types):
     try:
         results = _get_filenames(dirpath, doc_types)
     except OSError as e:
-        print(e)
+        logger.error(e)
         return 1
 
-    print("Results for {}".format(dirpath))
+    logger.info("Results for {}".format(dirpath))
     _show_basic_fnames_results(results)
-    print()
-
+    logger.info("\n")
     return 0
 
 
@@ -428,6 +425,7 @@ def setup_argparser():
        <https://docs.python.org/3.7/library/argparse.html#argparse.Namespace>`_.
 
     """
+    # TODO: explain code
     # Setup the parser
     parser = argparse.ArgumentParser(
         # usage="%(prog)s [OPTIONS]",
@@ -528,6 +526,7 @@ def main():
     Only one action at a time can be performed.
 
     """
+    # TODO: explain code
     args = setup_argparser()
     # ==============
     # Logging config
@@ -535,12 +534,16 @@ def main():
     # NOTE: if quiet and verbose are both activated, only quiet will have an
     # effect
     if args.quiet:  # Logging disabled
-        # TODO: check why 2nd option is not already set to True by default
+        # Reset logger by removing all handlers and add a null handler
         logger = setup_basic_logger(__name__, remove_all_initial_handlers=True)
         logger.addHandler(NullHandler())
     else:  # Logging enabled
         if args.no_color:  # Color disabled
             uninstall_colored_logger()
+        else:
+            # TODO: install colored logger
+            pass
+        # Setup a basic CONSOLE logger
         logger = setup_basic_logger(
             name=__name__,
             add_console_handler=True,
@@ -574,9 +577,7 @@ def main():
         elif args.undo_group:
             retcode = undo_group_docs_into_folders(None)
         else:
-            # TODO: default when no action given is to start scraping?
-            print("No action selected: edit (-e), reset (-r) or start the "
-                  "scraper (-s)")
+            logger("No action selected")
     except (AssertionError, AttributeError, FileNotFoundError,
             KeyboardInterrupt, OSError) as e:
         # TODO: explain this line

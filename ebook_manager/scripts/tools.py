@@ -15,7 +15,7 @@ from logging import NullHandler
 import ipdb
 
 from ebook_manager import __version__
-from pyutils import install_colored_logger, uninstall_colored_logger
+from pyutils import uninstall_colored_logger
 from pyutils.logutils import setup_basic_logger
 
 
@@ -25,11 +25,8 @@ logger.addHandler(NullHandler())
 _doc_types = ['azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub', 'gz', 'mobi', 'pdf',
               'rar', 'zip']
 # For printing
-_nb_items = 10
-_nb_chars = 50
-
-
-# TODO: add logging message at the start of each function
+_nb_items = 20
+_nb_chars = 100
 
 
 def _add_plural(list_or_number, pair=('', 's')):
@@ -44,6 +41,7 @@ def _add_plural(list_or_number, pair=('', 's')):
     -------
 
     """
+    # TODO: explain code
     if isinstance(list_or_number, list):
         nb_items = len(list_or_number)
     else:
@@ -83,6 +81,26 @@ def _get_fnames(dirpath, doc_types=_doc_types):
     results.rejected_fnames = rejected_filenames
     results.rejected_ext = rejected_ext
     return results
+
+
+def _get_reduced_fname(fname, nb_chars=_nb_chars):
+    """TODO
+
+    Parameters
+    ----------
+    filename
+    nb_chars
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    root, ext = _split_fname(fname)
+    reduced_root = "{}{}".format(root[:nb_chars],
+                                 "[...]" if len(root) > nb_chars else "")
+    reduced_fname = "{}{}".format(reduced_root, ".{}".format(ext) if ext else "")
+    return reduced_fname
 
 
 def _log_main_msg(msg, sign='='):
@@ -129,19 +147,8 @@ def _show_fnames_from_coll(coll, nb_items=_nb_items, nb_chars=_nb_chars, sort=Tr
     if len(coll):
         coll = coll[:nb_items]
         for fname in coll:
-            root, ext = _split_fname(fname)
-            reduced_root = "{}{}".format(
-                root[:nb_chars],
-                "[...]" if len(root) > nb_chars else "")
-            if ext:
-                # Filename with extension
-                new_fname = "- {}.{}".format(
-                    reduced_root,
-                    ext)
-            else:
-                # Filename without extension
-                new_fname = "- {}".format(reduced_root)
-            logger.info(new_fname)
+            new_fname = _get_reduced_fname(fname)
+            logger.info("- {}".format(new_fname))
     return 0
 
 
@@ -189,19 +196,19 @@ def _show_basic_fnames_results(results, nb_items=_nb_items, nb_chars=_nb_chars):
         logger.info("There are 0 rejected extensions")
 
 
-def _split_fname(filename):
+def _split_fname(fname):
     """TODO
 
     Parameters
     ----------
-    filename
+    fname
 
     Returns
     -------
 
     """
     # TODO: explain code
-    root, ext = os.path.splitext(filename)
+    root, ext = os.path.splitext(fname)
     ext = ext[1:]
     return root, ext
 
@@ -256,7 +263,6 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types,
         return 1
     whole_results = [results1, results2]
 
-    # TODO: reduce filename shown
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
         logger.info("Results for set{}: <color>{}</color>".format(i+1, dirpath))
         results = whole_results[i]
@@ -309,31 +315,46 @@ def fix_extensions(dirpath, doc_types=_doc_types):
 
     """
     # TODO: explain code
+    _log_main_msg(msg="Fix file extensions in {}".format(dirpath))
     metadata = namedtuple("metadata", "retcode new_filepaths")
     metadata.new_filepaths = []
     new_filepaths = []
     for filename in os.listdir(dirpath):
         src_filepath = os.path.join(dirpath, filename)
         root, ext = _split_fname(filename)
-        if os.path.isfile(src_filepath) and ext not in doc_types:
+        if ext and os.path.isfile(src_filepath) and ext not in doc_types:
+            fixed = False
+            logger.debug("<color>Trying to fix {} ...</color>".format(filename))
             if ext.lower() in doc_types:
+                # Fix 1: lowercase extension
+                logger.debug("<color>Fixed file extension with lowercase"
+                             "</color>")
                 ext = ext.lower()
+                fixed = True
             elif filename.count('.') > 1:
-                # Fix 2: remove everything after the extension
+                # Fix 2: remove everything after the extension and lowercase
+                # newly found extension
                 # e.g. file.pdf.sb1-383921a --> file.pdf
                 root2, ext2 = _split_fname(root)
                 ext2 = ext2.lower()
                 if ext2 in doc_types:
+                    logger.debug("<color>Fixed file extension by removing outer "
+                                 "extension</color>")
                     root = root2
                     ext = ext2
-                else:
-                    continue
+                    fixed = True
+            if fixed:
+                new_filename = "{}.{}".format(root, ext)
+                dst_filepath = os.path.join(dirpath, new_filename)
+                logger.info("<color>Fixed filename:</color> {} <color>TO</color> "
+                            "{}".format(
+                             filename,
+                             new_filename))
+                shutil.move(src_filepath, dst_filepath)
+                new_filepaths.append((src_filepath, dst_filepath))
             else:
-                continue
-            new_filename = "{}.{}".format(root, ext)
-            dst_filepath = os.path.join(dirpath, new_filename)
-            shutil.move(src_filepath, dst_filepath)
-            new_filepaths.append((src_filepath, dst_filepath))
+                logger.warning("<color>Filename couldn't be fixed:</color> "
+                               "{}".format(filename))
     metadata.new_filepaths = new_filepaths
     metadata.retcode = 0
     return metadata
@@ -357,6 +378,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     """
     # TODO: explain code
     # TODO: use mv command
+    _log_main_msg(msg="Group documents into folders")
     metadata = namedtuple("metadata", "retcode src_dirpath folderpaths")
     metadata.src_dirpath = src_dirpath
     folderpaths = []
@@ -371,12 +393,14 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     # Group valid documents into folders
     group_id = 0
     n_groups = math.ceil(len(valid_fnames)/group_size)
+    logger.info("<color>Source directory:</color> {}".format(src_dirpath))
+    logger.info("<color>Destination directory:</color> {}".format(dst_dirpath))
     logger.info("Number of valid documents: {}".format(len(valid_fnames)))
     logger.info("Number of groups: {}".format(n_groups))
     logger.info("Group size: {}".format(group_size))
     logger.debug("")
     for i in range(0, len(valid_fnames), group_size):
-        logger.debug("Group {}".format(group_id))
+        logger.debug("<color>Group {}</color>".format(group_id))
         group = valid_fnames[i:i+group_size]
         # Create folder for the group of documents
         group_folderpath = os.path.join(dst_dirpath,
@@ -384,12 +408,19 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
         group_id += 1
         # TODO: use create_dir() from pyutils.genutils
         # TODO: case where group folder already exists
+        if not os.path.exists(group_folderpath):
+            logger.debug("<color>Creating folder:</color> {}".format(
+                group_folderpath))
         pathlib.Path(group_folderpath).mkdir(parents=True)
         folderpaths.append(group_folderpath)
         for filename in group:
             src_filepath = os.path.join(src_dirpath, filename)
             dst_filepath = os.path.join(group_folderpath, filename)
+            logger.debug("<color>Moving file</color> {}".format(
+                _get_reduced_fname(filename)))
             shutil.move(src_filepath, dst_filepath)
+        # TODO: simulate error by not proving msg to logger, e.g. logger.debug()
+        logger.debug("")
     metadata.folderpaths = folderpaths
     metadata.retcode = 0
     return metadata
@@ -668,8 +699,7 @@ def main():
             retcode = undo_group_docs_into_folders(None)
         else:
             logger("No action selected")
-    except (AssertionError, AttributeError, FileNotFoundError,
-            KeyboardInterrupt, OSError) as e:
+    except Exception as e:
         # TODO: explain this line
         # traceback.print_exc()
         e = "<color>{}</color>".format(e)

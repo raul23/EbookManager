@@ -24,9 +24,32 @@ logger.addHandler(NullHandler())
 
 _doc_types = ['azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub', 'gz', 'mobi', 'pdf',
               'rar', 'zip']
+# For printing
+_nb_items = 10
+_nb_chars = 50
 
 
 # TODO: add logging message at the start of each function
+
+
+def _add_plural(list_or_number, pair=('', 's')):
+    """TODO
+
+    Parameters
+    ----------
+    list_
+    pair
+
+    Returns
+    -------
+
+    """
+    if isinstance(list_or_number, list):
+        nb_items = len(list_or_number)
+    else:
+        assert isinstance(list_or_number, int)
+        nb_items = list_or_number
+    return pair[1] if nb_items > 1 else pair[0]
 
 
 def _get_fnames(dirpath, doc_types=_doc_types):
@@ -62,45 +85,74 @@ def _get_fnames(dirpath, doc_types=_doc_types):
     return results
 
 
-def _show_fnames_from_coll(coll, max_items=None, n_chars=100):
+def _log_main_msg(msg, sign='='):
     """TODO
 
     Parameters
     ----------
-    coll
-    max_items
-    n_chars
+    msg
+    sign
 
     Returns
     -------
 
     """
     # TODO: explain code
-    if isinstance(coll, set):
-        coll = list(coll)
+    # 4 because of # at the beginning and end of middle message (+ space)
+    nb_signs = len(msg) + 4
+    signs = "<color>{}</color>".format(sign * nb_signs)
+    # Log first line of signs
+    logger.info(signs)
+    # Log middle message
+    logger.info("<color># {} #</color>".format(msg))
+    # Log second line of signs
+    logger.info(signs)
+
+
+def _show_fnames_from_coll(coll, nb_items=_nb_items, nb_chars=_nb_chars, sort=True):
+    """TODO
+
+    Parameters
+    ----------
+    coll
+    nb_items
+    nb_chars
+    sort
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    coll = list(coll) if isinstance(coll, set) else coll
+    coll = sorted(coll) if sort else coll
     if len(coll):
-        if max_items is not None:
-            coll = coll[:max_items]
+        coll = coll[:nb_items]
         for fname in coll:
             root, ext = _split_fname(fname)
+            reduced_root = "{}{}".format(
+                root[:nb_chars],
+                "[...]" if len(root) > nb_chars else "")
             if ext:
-                new_fname = "- {}{}.{}".format(
-                    root[:n_chars] if len(root) > n_chars else root,
-                    "[...]" if len(root) > n_chars else "",
+                # Filename with extension
+                new_fname = "- {}.{}".format(
+                    reduced_root,
                     ext)
             else:
-                new_fname = "- {}".format(root)
+                # Filename without extension
+                new_fname = "- {}".format(reduced_root)
             logger.info(new_fname)
     return 0
 
 
-def _show_basic_fnames_results(results, max_items=20):
+def _show_basic_fnames_results(results, nb_items=_nb_items, nb_chars=_nb_chars):
     """TODO
 
     Parameters
     ----------
     results
-    max_items
+    nb_items
+    nb_chars
 
     Returns
     -------
@@ -113,14 +165,19 @@ def _show_basic_fnames_results(results, max_items=20):
     # TODO: simulate TypeError with results.rejected_fnames (no len)
     nb_rejected_fnames = len(results.rejected_fnames)
     if nb_rejected_fnames > 0:
-        logger.warning("<color>There are {} rejected files</color>".format(
-            nb_rejected_fnames))
-        if nb_rejected_fnames > max_items:
-            logger.info("Some of the rejected files: ")
+        logger.warning("<color>There {} {} rejected file{}</color>".format(
+            _add_plural(nb_rejected_fnames, ('is', 'are')),
+            nb_rejected_fnames,
+            _add_plural(nb_rejected_fnames)))
+        if nb_rejected_fnames > nb_items:
+            msg = "Some of the rejected files:"
         else:
-            logger.info("Rejected files: ")
-        _show_fnames_from_coll(sorted(results.rejected_fnames),
-                               max_items=max_items)
+            msg = "Rejected files:"
+        logger.info(msg)
+        _show_fnames_from_coll(results.rejected_fnames,
+                               nb_items=nb_items,
+                               nb_chars=nb_chars,
+                               sort=True)
     else:
         logger.info("There are 0 rejected files")
     nb_rejected_exts = len(results.rejected_ext)
@@ -173,7 +230,8 @@ def copy_docs(src_dirpath, dst_dirpath, doc_types=_doc_types):
     return 0
 
 
-def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
+def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types,
+                      nb_items=_nb_items, nb_chars=_nb_chars):
     """TODO
 
     Parameters
@@ -181,12 +239,15 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
     dirpath_set1
     dirpath_set2
     doc_types
+    nb_items
+    nb_chars
 
     Returns
     -------
 
     """
     # TODO: explain code
+    _log_main_msg(msg="Difference between two sets of documents")
     try:
         results1 = _get_fnames(dirpath_set1, doc_types)
         results2 = _get_fnames(dirpath_set2, doc_types)
@@ -197,27 +258,39 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types):
 
     # TODO: reduce filename shown
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
-        logger.info("Results for set{}: {}".format(i+1, dirpath))
+        logger.info("Results for set{}: <color>{}</color>".format(i+1, dirpath))
         results = whole_results[i]
-        _show_basic_fnames_results(results)
+        _show_basic_fnames_results(results, nb_items=nb_items, nb_chars=nb_chars)
 
         other_idx = 1 if i == 0 else 0
         diff = set(results.valid_fnames) - \
                set(whole_results[other_idx].valid_fnames)
 
-        logger.info("There are {} differences between set{} and set{}".format(
-            len(diff),
-            i + 1,
-            other_idx + 1))
-        if len(diff) > 1:
-            if len(diff) > 10:
-                msg = "Some of the differences between set{} and set{}:"
+        nb_diff = len(diff)
+        if nb_diff > 0:
+            logger.warning("<color>There {} {} difference{} between set{} and "
+                           "set{}</color>".format(
+                            _add_plural(nb_diff, ('is', 'are')),
+                            nb_diff,
+                            _add_plural(nb_diff),
+                            i + 1,
+                            other_idx + 1))
+            if nb_diff > nb_items:
+                msg = "Some of the differences"
             else:
-                msg = "Differences between set{} and set{}: {}"
-            logger.info(msg.format(
+                msg = "Difference"
+            logger.info("{} between set{} and set{}:".format(
+                msg,
                 i+1,
                 other_idx+1))
-            _show_fnames_from_coll(coll=diff, max_items=10)
+            _show_fnames_from_coll(coll=diff,
+                                   nb_items=nb_items,
+                                   nb_chars=nb_chars,
+                                   sort=True)
+        else:
+            logger.info("There are 0 differences between set{} and set{}".format(
+                i + 1,
+                other_idx + 1))
         if i == 0:
             logger.info("")
     return 0
@@ -344,37 +417,16 @@ def modify_fnames(dirpath, doc_types=_doc_types):
     return 0
 
 
-def _log_main_msg(msg, sign='='):
-    """TODO
-
-    Parameters
-    ----------
-    msg
-    sign
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    # 4 because of # at the beginning and end of middle message (+ space)
-    nb_signs = len(msg) + 4
-    signs = "<color>{}</color>".format(sign * nb_signs)
-    # Log first line of signs
-    logger.info(signs)
-    # Log middle message
-    logger.info("<color># {} #</color>".format(msg))
-    # Log second line of signs
-    logger.info(signs)
-
-
-def show_results_about_docs(dirpath, doc_types=_doc_types):
+def show_results_about_docs(dirpath, doc_types=_doc_types, nb_items=_nb_items,
+                            nb_chars=_nb_chars):
     """
 
     Parameters
     ----------
     dirpath
     doc_types
+    nb_items
+    nb_chars
 
     Returns
     -------
@@ -388,7 +440,7 @@ def show_results_about_docs(dirpath, doc_types=_doc_types):
         logger.error(e)
         return 1
 
-    _show_basic_fnames_results(results)
+    _show_basic_fnames_results(results, nb_items=nb_items, nb_chars=nb_chars)
     return 0
 
 
@@ -563,7 +615,6 @@ def main():
     # TODO: explain code
     # TODO: global logger?
     args = setup_argparser()
-    ipdb.set_trace()
     # ==============
     # Logging config
     # ==============

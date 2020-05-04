@@ -4,6 +4,7 @@
 """
 
 import argparse
+import glob
 import logging
 import math
 import os
@@ -29,6 +30,9 @@ _nb_items = 20
 _nb_chars = 100
 
 
+# TODO: add try except to functions
+
+
 def _add_plural(list_or_number, pair=('', 's')):
     """TODO
 
@@ -50,13 +54,38 @@ def _add_plural(list_or_number, pair=('', 's')):
     return pair[1] if nb_items > 1 else pair[0]
 
 
-def _get_fnames(dirpath, doc_types=_doc_types):
+def _copy_docs(src_dirpath, dst_dirpath, doc_types=_doc_types):
+    """TODO
+
+    Parameters
+    ----------
+    src_dirpath
+    dst_dirpath
+    doc_types
+
+    Returns
+    -------
+
+    """
+    # TODO: do it with mv *.pdf ...
+    ipdb.set_trace()
+    for filename in os.listdir(src_dirpath):
+        ext = os.path.splitext(filename)[-1][1:]
+        if ext in doc_types:
+            src_filepath = os.path.join(src_dirpath, filename)
+            dst_filepath = os.path.join(dst_dirpath, filename)
+            shutil.copyfile(src_filepath, dst_filepath)
+    return 0
+
+
+def _get_fnames(dirpath, doc_types=_doc_types, recursive=False):
     """TODO: filename rejected if it belongs to a directory
 
     Parameters
     ----------
     dirpath
     doc_types
+    recursive
 
     Returns
     -------
@@ -64,43 +93,42 @@ def _get_fnames(dirpath, doc_types=_doc_types):
     """
     # TODO: explain code
     results = namedtuple("results", "valid_fnames rejected_fnames rejected_ext")
-    valid_filenames = []
-    rejected_filenames = []
+    valid_fnames = []
+    rejected_fnames = []
     rejected_ext = set()
-    for filename in os.listdir(dirpath):
-        ext = os.path.splitext(filename)[-1][1:]
-        if os.path.isdir(os.path.join(dirpath, filename)):
-            # Reject if filename is associated to a directory
-            continue
-        elif ext in doc_types:
-            valid_filenames.append(filename)
-        else:
-            rejected_filenames.append(filename)
-            rejected_ext.add(ext)
-    results.valid_fnames = valid_filenames
-    results.rejected_fnames = rejected_filenames
+
+    def process_fname(fname):
+        """TODO
+
+        Parameters
+        ----------
+        fname
+
+        Returns
+        -------
+
+        """
+        ext = os.path.splitext(fname)[-1][1:]
+        # Reject if filename is associated to a directory
+        if os.path.isfile(os.path.join(dirpath, fname)):
+            if ext in doc_types:
+                valid_fnames.append(fname)
+            else:
+                rejected_fnames.append(fname)
+                rejected_ext.add(ext)
+
+    if recursive:
+        logger.info("Directory iterated <color>recursively</color>")
+        for fname in glob.iglob(os.path.join(dirpath, '**/*'), recursive=True):
+            if os.path.isfile(fname):
+                process_fname(fname)
+    else:
+        for fname in os.listdir(dirpath):
+            process_fname(fname)
+    results.valid_fnames = valid_fnames
+    results.rejected_fnames = rejected_fnames
     results.rejected_ext = rejected_ext
     return results
-
-
-def _get_reduced_fname(fname, nb_chars=_nb_chars):
-    """TODO
-
-    Parameters
-    ----------
-    filename
-    nb_chars
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    root, ext = _split_fname(fname)
-    reduced_root = "{}{}".format(root[:nb_chars],
-                                 "[...]" if len(root) > nb_chars else "")
-    reduced_fname = "{}{}".format(reduced_root, ".{}".format(ext) if ext else "")
-    return reduced_fname
 
 
 def _log_main_msg(msg, sign='='):
@@ -127,6 +155,26 @@ def _log_main_msg(msg, sign='='):
     logger.info(signs)
 
 
+def _reduce_fname(fname, nb_chars=_nb_chars):
+    """TODO
+
+    Parameters
+    ----------
+    filename
+    nb_chars
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    root, ext = _split_fname(fname)
+    reduced_root = "{}{}".format(root[:nb_chars],
+                                 "[...]" if len(root) > nb_chars else "")
+    reduced_fname = "{}{}".format(reduced_root, ".{}".format(ext) if ext else "")
+    return reduced_fname
+
+
 def _show_fnames_from_coll(coll, nb_items=_nb_items, nb_chars=_nb_chars, sort=True):
     """TODO
 
@@ -147,7 +195,7 @@ def _show_fnames_from_coll(coll, nb_items=_nb_items, nb_chars=_nb_chars, sort=Tr
     if len(coll):
         coll = coll[:nb_items]
         for fname in coll:
-            new_fname = _get_reduced_fname(fname)
+            new_fname = _reduce_fname(fname)
             logger.info("- {}".format(new_fname))
     return 0
 
@@ -213,32 +261,53 @@ def _split_fname(fname):
     return root, ext
 
 
-def copy_docs(src_dirpath, dst_dirpath, doc_types=_doc_types):
+def _undo_fix_extensions(metadata):
     """TODO
 
     Parameters
     ----------
-    src_dirpath
-    dst_dirpath
-    doc_types
+    metadata
 
     Returns
     -------
 
     """
-    # TODO: do it with mv *.pdf ...
-    ipdb.set_trace()
-    for filename in os.listdir(src_dirpath):
-        ext = os.path.splitext(filename)[-1][1:]
-        if ext in doc_types:
-            src_filepath = os.path.join(src_dirpath, filename)
-            dst_filepath = os.path.join(dst_dirpath, filename)
-            shutil.copyfile(src_filepath, dst_filepath)
+    # TODO: explain code
+    # TODO: add message if AssertError
+    assert metadata.retcode == 0
+    new_filepaths = metadata.new_filepaths
+    for old_filepath, new_filepath in new_filepaths:
+        shutil.move(new_filepath, old_filepath)
+    return 0
+
+
+def _undo_group_docs_into_folders(metadata):
+    """TODO
+
+    Parameters
+    ----------
+    metadata
+
+    Returns
+    -------
+
+    """
+    # TODO: explain code
+    # TODO: add message if AssertError
+    assert metadata.retcode == 0
+    src_dirpath = metadata.src_dirpath
+    folderpaths = metadata.folderpaths
+    for group_folderpath in folderpaths:
+        for filename in os.listdir(group_folderpath):
+            src_filepath = os.path.join(group_folderpath, filename)
+            dst_filepath = os.path.join(src_dirpath, filename)
+            shutil.move(src_filepath, dst_filepath)
+        os.rmdir(group_folderpath)
     return 0
 
 
 def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types,
-                      nb_items=_nb_items, nb_chars=_nb_chars):
+                      nb_items=_nb_items, nb_chars=_nb_chars, recursive=False):
     """TODO
 
     Parameters
@@ -248,6 +317,7 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types,
     doc_types
     nb_items
     nb_chars
+    recursive
 
     Returns
     -------
@@ -255,23 +325,17 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types,
     """
     # TODO: explain code
     _log_main_msg(msg="Difference between two sets of documents")
-    try:
-        results1 = _get_fnames(dirpath_set1, doc_types)
-        results2 = _get_fnames(dirpath_set2, doc_types)
-    except OSError as e:
-        logger.error(e)
-        return 1
+    results1 = _get_fnames(dirpath_set1, doc_types, recursive=recursive)
+    results2 = _get_fnames(dirpath_set2, doc_types, recursive=recursive)
+    ipdb.set_trace()
     whole_results = [results1, results2]
-
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
         logger.info("Results for set{}: <color>{}</color>".format(i+1, dirpath))
         results = whole_results[i]
         _show_basic_fnames_results(results, nb_items=nb_items, nb_chars=nb_chars)
-
         other_idx = 1 if i == 0 else 0
         diff = set(results.valid_fnames) - \
                set(whole_results[other_idx].valid_fnames)
-
         nb_diff = len(diff)
         if nb_diff > 0:
             logger.warning("<color>There {} {} difference{} between set{} and "
@@ -377,18 +441,12 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
 
     """
     # TODO: explain code
-    # TODO: use mv command
     _log_main_msg(msg="Group documents into folders")
     metadata = namedtuple("metadata", "retcode src_dirpath folderpaths")
     metadata.src_dirpath = src_dirpath
     folderpaths = []
     # Get list of documents and keep only valid documents (based on types)
-    try:
-        results = _get_fnames(src_dirpath, doc_types)
-    except OSError as e:
-        logger.error(e)
-        return 1
-
+    results = _get_fnames(src_dirpath, doc_types)
     valid_fnames = results.valid_fnames
     # Group valid documents into folders
     group_id = 0
@@ -417,7 +475,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
             src_filepath = os.path.join(src_dirpath, filename)
             dst_filepath = os.path.join(group_folderpath, filename)
             logger.debug("<color>Moving file</color> {}".format(
-                _get_reduced_fname(filename)))
+                _reduce_fname(filename)))
             shutil.move(src_filepath, dst_filepath)
         # TODO: simulate error by not proving msg to logger, e.g. logger.debug()
         logger.debug("")
@@ -426,21 +484,23 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     return metadata
 
 
-def modify_fnames(dirpath, doc_types=_doc_types):
+def modify_fnames(dirpath, doc_types=_doc_types, recursive=False):
     """TODO
 
     Parameters
     ----------
     dirpath
     doc_types
+    recursive
 
     Returns
     -------
 
     """
     # TODO: explain code
-    # Iterate recursively through each folder within the `dirpath` directory
+    _log_main_msg(msg="Modify filenames from {}".format(dirpath))
     ipdb.set_trace()
+    results = _get_fnames(dirpath, doc_types)
     for root, dirs, files in os.walk(dirpath):
         # Remove parentheses and brackets at the beginning of the filename along
         # with their content
@@ -449,7 +509,7 @@ def modify_fnames(dirpath, doc_types=_doc_types):
 
 
 def show_results_about_docs(dirpath, doc_types=_doc_types, nb_items=_nb_items,
-                            nb_chars=_nb_chars):
+                            nb_chars=_nb_chars, recursive=False):
     """
 
     Parameters
@@ -458,6 +518,7 @@ def show_results_about_docs(dirpath, doc_types=_doc_types, nb_items=_nb_items,
     doc_types
     nb_items
     nb_chars
+    recursive
 
     Returns
     -------
@@ -465,58 +526,8 @@ def show_results_about_docs(dirpath, doc_types=_doc_types, nb_items=_nb_items,
     """
     # TODO: explain code
     _log_main_msg(msg="Show basic results about documents: {}".format(dirpath))
-    try:
-        results = _get_fnames(dirpath, doc_types)
-    except OSError as e:
-        logger.error(e)
-        return 1
-
+    results = _get_fnames(dirpath, doc_types, recursive=recursive)
     _show_basic_fnames_results(results, nb_items=nb_items, nb_chars=nb_chars)
-    return 0
-
-
-def undo_fix_extensions(metadata):
-    """TODO
-
-    Parameters
-    ----------
-    metadata
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    # TODO: add message if AssertError
-    assert metadata.retcode == 0
-    new_filepaths = metadata.new_filepaths
-    for old_filepath, new_filepath in new_filepaths:
-        shutil.move(new_filepath, old_filepath)
-    return 0
-
-
-def undo_group_docs_into_folders(metadata):
-    """TODO
-
-    Parameters
-    ----------
-    metadata
-
-    Returns
-    -------
-
-    """
-    # TODO: explain code
-    # TODO: add message if AssertError
-    assert metadata.retcode == 0
-    src_dirpath = metadata.src_dirpath
-    folderpaths = metadata.folderpaths
-    for group_folderpath in folderpaths:
-        for filename in os.listdir(group_folderpath):
-            src_filepath = os.path.join(group_folderpath, filename)
-            dst_filepath = os.path.join(src_dirpath, filename)
-            shutil.move(src_filepath, dst_filepath)
-        os.rmdir(group_folderpath)
     return 0
 
 
@@ -562,6 +573,8 @@ documents into folders, and modifying filenames based on a template.''',
                              "traceback when there is an exception.")
     parser.add_argument("-nc", "--no-color", action="store_true",
                         help="Don't print color codes in output")
+    parser.add_argument("-r", "--recursive", action="store_true",
+                        help="Recursively iterate through directories")
     # help=argparse.SUPPRESS)
     # Group arguments that are closely related
     # ======================================
@@ -613,19 +626,6 @@ documents into folders, and modifying filenames based on a template.''',
         "-show", "--show_dir", dest="show_dirpath",
         help='''Directory path containing the documents whose filenames will 
         be modified if necessary.''')
-    # ==========
-    # Undo tasks
-    # ==========
-    undo_group = parser.add_argument_group("Undo some of the tasks such as "
-                                           "unfixing the extensions and "
-                                           "ungrouping documents")
-    # TODO: implement these tasks
-    undo_group.add_argument(
-        "--undo_fix", action="store_true",
-        help='''Undo the LAST fixing of extensions.''')
-    undo_group.add_argument(
-        "--undo_group", action="store_true",
-        help='''Undo the LAST grouping of documents.''')
     return parser.parse_args()
 
 
@@ -667,6 +667,8 @@ def main():
             logger.setLevel(logging.DEBUG)
         else:
             logger.setLevel(logging.INFO)
+    if args.recursive:
+        logger.debug("<color>Recursive is ON</color>")
     # =======
     # Actions
     # =======
@@ -676,27 +678,25 @@ def main():
         # NOTE: only one action at a time can be performed
         if args.diff_dirpath:
             retcode = diff_sets_of_docs(args.diff_dirpath[0],
-                                        args.diff_dirpath[1])
+                                        args.diff_dirpath[1],
+                                        recursive=args.recursive)
         elif args.fix_dirpath:
             metadata = fix_extensions(args.fix_dirpath)
             retcode = metadata.retcode
-            # TODO: remove soon
-            retcode = undo_fix_extensions(metadata)
+            # TODO: comment if finished testing
+            # retcode = _undo_fix_extensions(metadata)
         elif args.group_dirpath:
             metadata = group_docs_into_folders(args.group_dirpath[0],
                                                args.group_dirpath[1],
                                                args.group_size)
             retcode = metadata.retcode
-            # TODO: remove soon
-            retcode = undo_group_docs_into_folders(metadata)
+            # TODO: comment if finished testing
+            # retcode = _undo_group_docs_into_folders(metadata)
         elif args.modify_dirpath:
             retcode = modify_fnames(args.modify_dirpath)
         elif args.show_dirpath:
-            retcode = show_results_about_docs(args.show_dirpath)
-        elif args.undo_fix:
-            retcode = undo_fix_extensions(None)
-        elif args.undo_group:
-            retcode = undo_group_docs_into_folders(None)
+            retcode = show_results_about_docs(args.show_dirpath,
+                                              recursive=args.recursive)
         else:
             logger("No action selected")
     except Exception as e:

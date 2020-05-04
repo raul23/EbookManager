@@ -78,7 +78,7 @@ def _copy_docs(src_dirpath, dst_dirpath, doc_types=_doc_types):
     return 0
 
 
-def _get_fnames(dirpath, doc_types=_doc_types, recursive=False):
+def _get_data_about_fnames(dirpath, doc_types=_doc_types, recursive=False):
     """TODO: filename rejected if it belongs to a directory
 
     Parameters
@@ -121,7 +121,7 @@ def _get_fnames(dirpath, doc_types=_doc_types, recursive=False):
         logger.info("Directory iterated <color>recursively</color>")
         for fname in glob.iglob(os.path.join(dirpath, '**/*'), recursive=True):
             if os.path.isfile(fname):
-                process_fname(fname)
+                process_fname(os.path.basename(fname))
     else:
         for fname in os.listdir(dirpath):
             process_fname(fname)
@@ -325,8 +325,12 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types,
     """
     # TODO: explain code
     _log_main_msg(msg="Difference between two sets of documents")
-    results1 = _get_fnames(dirpath_set1, doc_types, recursive=recursive)
-    results2 = _get_fnames(dirpath_set2, doc_types, recursive=recursive)
+    results1 = _get_data_about_fnames(dirpath_set1,
+                                      doc_types,
+                                      recursive=recursive)
+    results2 = _get_data_about_fnames(dirpath_set2,
+                                      doc_types,
+                                      recursive=recursive)
     ipdb.set_trace()
     whole_results = [results1, results2]
     for i, dirpath in enumerate([dirpath_set1, dirpath_set2]):
@@ -446,7 +450,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     metadata.src_dirpath = src_dirpath
     folderpaths = []
     # Get list of documents and keep only valid documents (based on types)
-    results = _get_fnames(src_dirpath, doc_types)
+    results = _get_data_about_fnames(src_dirpath, doc_types)
     valid_fnames = results.valid_fnames
     # Group valid documents into folders
     group_id = 0
@@ -500,7 +504,7 @@ def modify_fnames(dirpath, doc_types=_doc_types, recursive=False):
     # TODO: explain code
     _log_main_msg(msg="Modify filenames from {}".format(dirpath))
     ipdb.set_trace()
-    results = _get_fnames(dirpath, doc_types)
+    results = _get_data_about_fnames(dirpath, doc_types)
     for root, dirs, files in os.walk(dirpath):
         # Remove parentheses and brackets at the beginning of the filename along
         # with their content
@@ -526,7 +530,7 @@ def show_results_about_docs(dirpath, doc_types=_doc_types, nb_items=_nb_items,
     """
     # TODO: explain code
     _log_main_msg(msg="Show basic results about documents: {}".format(dirpath))
-    results = _get_fnames(dirpath, doc_types, recursive=recursive)
+    results = _get_data_about_fnames(dirpath, doc_types, recursive=recursive)
     _show_basic_fnames_results(results, nb_items=nb_items, nb_chars=nb_chars)
     return 0
 

@@ -155,7 +155,7 @@ def _log_main_msg(msg, sign='='):
     logger.info(signs)
 
 
-def _reduce_fname(fname, nb_chars=_nb_chars):
+def _shorten_fname(fname, nb_chars=_nb_chars):
     """TODO
 
     Parameters
@@ -169,10 +169,10 @@ def _reduce_fname(fname, nb_chars=_nb_chars):
     """
     # TODO: explain code
     root, ext = _split_fname(fname)
-    reduced_root = "{}{}".format(root[:nb_chars],
-                                 "[...]" if len(root) > nb_chars else "")
-    reduced_fname = "{}{}".format(reduced_root, ".{}".format(ext) if ext else "")
-    return reduced_fname
+    short_root = "{}{}".format(root[:nb_chars],
+                               "[...]" if len(root) > nb_chars else "")
+    # Return short filename
+    return "{}{}".format(short_root, ".{}".format(ext) if ext else "")
 
 
 def _show_fnames_from_coll(coll, nb_items=_nb_items, nb_chars=_nb_chars, sort=True):
@@ -195,7 +195,7 @@ def _show_fnames_from_coll(coll, nb_items=_nb_items, nb_chars=_nb_chars, sort=Tr
     if len(coll):
         coll = coll[:nb_items]
         for fname in coll:
-            new_fname = _reduce_fname(fname)
+            new_fname = _shorten_fname(fname, nb_chars)
             logger.info("- {}".format(new_fname))
     return 0
 
@@ -475,7 +475,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
             src_filepath = os.path.join(src_dirpath, filename)
             dst_filepath = os.path.join(group_folderpath, filename)
             logger.debug("<color>Moving file</color> {}".format(
-                _reduce_fname(filename)))
+                _shorten_fname(filename)))
             shutil.move(src_filepath, dst_filepath)
         # TODO: simulate error by not proving msg to logger, e.g. logger.debug()
         logger.debug("")

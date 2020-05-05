@@ -133,3 +133,6 @@ dmypy.json
 
 # JetBrains files and folders
 .idea/
+
+# Django directory
+webapp/

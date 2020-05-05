@@ -93,8 +93,8 @@ def _get_data_about_fnames(dirpath, doc_types=_doc_types, recursive=False):
     """
     # TODO: explain code
     results = namedtuple("results", "valid_fnames rejected_fnames rejected_ext")
-    valid_fnames = []
-    rejected_fnames = []
+    valid_fnames = set()
+    rejected_fnames = set()
     rejected_ext = set()
 
     def process_fname(fname):
@@ -112,9 +112,9 @@ def _get_data_about_fnames(dirpath, doc_types=_doc_types, recursive=False):
         # Reject if filename is associated to a directory
         if os.path.isfile(os.path.join(dirpath, fname)):
             if ext in doc_types:
-                valid_fnames.append(fname)
+                valid_fnames.add(fname)
             else:
-                rejected_fnames.append(fname)
+                rejected_fnames.add(fname)
                 rejected_ext.add(ext)
 
     if recursive:
@@ -342,8 +342,7 @@ def diff_sets_of_docs(dirpath_set1, dirpath_set2, doc_types=_doc_types,
         results = whole_results[i]
         _show_basic_fnames_results(results, nb_items=nb_items, nb_chars=nb_chars)
         other_idx = 1 if i == 0 else 0
-        diff = set(results.valid_fnames) - \
-               set(whole_results[other_idx].valid_fnames)
+        diff = results.valid_fnames - whole_results[other_idx].valid_fnames
         nb_diff = len(diff)
         if nb_diff > 0:
             logger.warning("<color>There {} {} difference{} between set{} and "
@@ -456,6 +455,7 @@ def group_docs_into_folders(src_dirpath, dst_dirpath, group_size=30,
     # Get list of documents and keep only valid documents (based on types)
     results = _get_data_about_fnames(src_dirpath, doc_types)
     valid_fnames = results.valid_fnames
+    valid_fnames = list(valid_fnames)
     # Group valid documents into folders
     group_id = 0
     n_groups = math.ceil(len(valid_fnames)/group_size)

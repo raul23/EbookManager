@@ -214,16 +214,17 @@ def _show_basic_fnames_results(results, nb_items=_nb_items, nb_chars=_nb_chars):
 
     """
     # TODO: explain code
+    # ===========
+    # Valid files
+    # ===========
     logger.info("Number of valid files: {}".format(len(results.valid_fnames)))
-    # TODO: log only some of the filenames if not verbose. Otherwise log
-    # the first 25
-    # TODO: simulate TypeError with results.rejected_fnames (no len)
+    # ==============
+    # Rejected files
+    # ==============
     nb_rejected_fnames = len(results.rejected_fnames)
+    msg = "Number of rejected files: {}".format(nb_rejected_fnames)
     if nb_rejected_fnames > 0:
-        logger.warning("<color>There {} {} rejected file{}</color>".format(
-            _add_plural(nb_rejected_fnames, ('is', 'are')),
-            nb_rejected_fnames,
-            _add_plural(nb_rejected_fnames)))
+        logger.warning("<color>{}</color>".format(msg))
         if nb_rejected_fnames > nb_items:
             msg = "Some of the rejected files:"
         else:
@@ -234,14 +235,17 @@ def _show_basic_fnames_results(results, nb_items=_nb_items, nb_chars=_nb_chars):
                                nb_chars=nb_chars,
                                sort=True)
     else:
-        logger.info("There are 0 rejected files")
+        logger.info(msg)
+    # ===================
+    # Rejected extensions
+    # ===================
     nb_rejected_exts = len(results.rejected_ext)
+    msg = "Number of rejected extensions: {}".format(nb_rejected_exts)
     if nb_rejected_exts > 0:
-        logger.warning("<color>There are {} rejected extensions</color>".format(
-            nb_rejected_exts))
+        logger.warning("<color>{}</color>".format(msg))
         logger.info("Rejected extensions: {}".format(results.rejected_ext))
     else:
-        logger.info("There are 0 rejected extensions")
+        logger.info(msg)
 
 
 def _split_fname(fname):

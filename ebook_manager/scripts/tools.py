@@ -708,7 +708,7 @@ def main():
         else:
             logger("No action selected")
     except Exception as e:
-        # TODO: explain this line
+        # TODO: explain this line, check https://stackoverflow.com/a/4992124
         # traceback.print_exc()
         e = "<color>{}</color>".format(e)
         if args.verbose:

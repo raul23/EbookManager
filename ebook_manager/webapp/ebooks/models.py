@@ -25,19 +25,25 @@ class Book(models.Model):
     format = models.CharField(max_length=10)
     md5 = models.CharField(max_length=32)
     sha256 = models.CharField(max_length=64)
-    add_date = models.DateTimeField('Date added')
-    update_date = models.DateTimeField('Date updated')
+    add_date = models.DateTimeField('Date added', auto_now_add=True)
+    update_date = models.DateTimeField('Date updated', auto_now=True)
     # TODO: ImageField required the Pillow library
     thumbnail_cover_image = models.ImageField()
     enlarged_cover_image = models.ImageField()
+
+    def __str__(self):
+        return self.title
 
 
 class Author(models.Model):
     books = models.ManyToManyField(Book)
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
-    add_date = models.DateTimeField('Date added')
-    update_date = models.DateTimeField('Date updated')
+    add_date = models.DateTimeField('Date added', auto_now_add=True)
+    update_date = models.DateTimeField('Date updated', auto_now=True)
+
+    def __str__(self):
+        return "{} {}".format(self.first_name, self.last_name)
 
 
 class Rating(models.Model):
@@ -48,20 +54,30 @@ class Rating(models.Model):
     # see https://docs.djangoproject.com/en/3.0/ref/models/fields/#floatfield
     rating = models.DecimalField(max_digits=3, decimal_places=2)
     nb_ratings = models.PositiveIntegerField('Number of ratings')
-    update_date = models.DateTimeField('Date updated')
-    add_date = models.DateTimeField('Date added')
-    update_date = models.DateTimeField('Date updated')
+    add_date = models.DateTimeField('Date added', auto_now_add=True)
+    update_date = models.DateTimeField('Date updated', auto_now=True)
+
+    def __str__(self):
+        return self.rating
 
 
 class Tags(models.Model):
     books = models.ManyToManyField(Book)
+    tag = models.CharField(max_length=200)
     source = models.CharField('Source of tag', max_length=200)
-    add_date = models.DateTimeField('Date added')
-    update_date = models.DateTimeField('Date updated')
+    add_date = models.DateTimeField('Date added', auto_now_add=True)
+    update_date = models.DateTimeField('Date updated', auto_now=True)
+
+    def __str__(self):
+        return self.tag
 
 
 class Categories(models.Model):
     books = models.ManyToManyField(Book)
+    category = models.CharField(max_length=200)
     source = models.CharField('Source of category', max_length=200)
-    add_date = models.DateTimeField('Date added')
-    update_date = models.DateTimeField('Date updated')
+    add_date = models.DateTimeField('Date added', auto_now_add=True)
+    update_date = models.DateTimeField('Date updated', auto_now=True)
+
+    def __str__(self):
+        return self.category

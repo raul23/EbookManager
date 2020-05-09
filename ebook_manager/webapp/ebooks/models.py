@@ -34,6 +34,10 @@ class Book(models.Model):
 
 class Author(models.Model):
     books = models.ManyToManyField(Book)
+    first_name = models.CharField(max_length=200)
+    last_name = models.CharField(max_length=200)
+    add_date = models.DateTimeField('Date added')
+    update_date = models.DateTimeField('Date updated')
 
 
 class Rating(models.Model):
@@ -45,15 +49,19 @@ class Rating(models.Model):
     rating = models.DecimalField(max_digits=3, decimal_places=2)
     nb_ratings = models.PositiveIntegerField('Number of ratings')
     update_date = models.DateTimeField('Date updated')
+    add_date = models.DateTimeField('Date added')
+    update_date = models.DateTimeField('Date updated')
 
 
 class Tags(models.Model):
     books = models.ManyToManyField(Book)
     source = models.CharField('Source of tag', max_length=200)
+    add_date = models.DateTimeField('Date added')
+    update_date = models.DateTimeField('Date updated')
 
 
 class Categories(models.Model):
     books = models.ManyToManyField(Book)
     source = models.CharField('Source of category', max_length=200)
-
-
+    add_date = models.DateTimeField('Date added')
+    update_date = models.DateTimeField('Date updated')

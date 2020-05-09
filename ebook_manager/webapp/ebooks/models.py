@@ -61,7 +61,7 @@ class Rating(models.Model):
         return self.rating
 
 
-class Tags(models.Model):
+class Tag(models.Model):
     books = models.ManyToManyField(Book)
     tag = models.CharField(max_length=200)
     source = models.CharField('Source of tag', max_length=200)
@@ -72,7 +72,7 @@ class Tags(models.Model):
         return self.tag
 
 
-class Categories(models.Model):
+class Category(models.Model):
     books = models.ManyToManyField(Book)
     category = models.CharField(max_length=200)
     source = models.CharField('Source of category', max_length=200)

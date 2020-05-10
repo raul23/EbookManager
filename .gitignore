@@ -134,5 +134,6 @@ dmypy.json
 # JetBrains files and folders
 .idea/
 
-# Django directory
+# Django directories
 mysite/
+migrations/

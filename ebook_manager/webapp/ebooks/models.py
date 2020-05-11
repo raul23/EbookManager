@@ -1,11 +1,29 @@
 from decimal import Decimal
 
-from django.core.validators import (MinValueValidator, MaxValueValidator,
-                                    RegexValidator)
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
 class Book(models.Model):
+
+    class TypeOfBookId(models.TextChoices):
+        ISBN10 = 'I10'
+        ISBN13 = 'I13'
+        ASIN = 'A'
+
+    class BookFormat(models.TextChoices):
+        Hardcover = 'H'
+        Paperback = 'P'
+
+    # Primary key, e.g. ISBN-10 or ASIN
+    book_id = models.CharField(max_length=13,
+                               default="",
+                               blank=True,
+                               primary_key=True)
+    id_type = models.CharField('Type of Book Id',
+                               max_length=10,
+                               choices=TypeOfBookId.choices)
+    # Title is required
     title = models.CharField(max_length=200)
     series = models.CharField(max_length=200, default="", blank=True)
     publisher = models.CharField(max_length=200, default="", blank=True)
@@ -13,32 +31,13 @@ class Book(models.Model):
                                     default=None,
                                     blank=True,
                                     null=True)
-    # TODO:
-    # - For isbn10 and isbn13, try to use a MaxValueValidator instead of a
-    # CharField as explained in https://stackoverflow.com/a/30850101
-    #
-    # - Also test with PositiveIntegerField, though django doc says that 'Values
-    # from 0 to 2147483647 are safe in all databases supported by Django'
-    # Ref.: https://bit.ly/2YGsxAI
-    # TODO: isbn should be unique
-    isbn10 = models.CharField(max_length=10,
-                              validators=[RegexValidator(r'^\d{1,10}$')],
-                              default="",
-                              blank=True)
-    isbn13 = models.CharField(max_length=13,
-                              validators=[RegexValidator(r'^\d{1,10}$')],
-                              default="",
-                              blank=True)
     pages = models.IntegerField(default=None, blank=True, null=True)
-    # Size is given in multiples of bytes, and the unit symbol is shown beside
-    # the file size, e.g. 660 KB
-    size = models.CharField(max_length=10, default="", blank=True)
-    # Book format, i.e. extension. For example, PDF, EPUB, or MOBI
-    format = models.CharField(max_length=10, default="", blank=True)
-    # md5 and sha256 are in hexadecimal
-    # TODO: md5 and sha256 should be unique
-    md5 = models.CharField(max_length=32, default="", blank=True)
-    sha256 = models.CharField(max_length=64, default="", blank=True)
+    language = models.CharField(max_length=50, default="", blank=True)
+    # Book format. For example, hardcover and paperback
+    book_format = models.CharField(max_length=10,
+                                   default="",
+                                   blank=True,
+                                   choices=BookFormat.choices)
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
     # TODO: ImageField required the Pillow library
@@ -49,7 +48,31 @@ class Book(models.Model):
         return self.title
 
 
+class BookFile(models.Model):
+    # Automatic primary key
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    pages = models.IntegerField(default=None, blank=True, null=True)
+    # Size is given in multiples of bytes, and the unit symbol is shown beside
+    # the file size, e.g. 660 KB
+    size = models.CharField(max_length=10, default="", blank=True)
+    # File extension. For example, PDF, EPUB, or MOBI
+    extension = models.CharField(max_length=10, default="", blank=True)
+    # md5 and sha256 are in hexadecimal
+    # TODO: test that md5 and sha256 should be unique
+    md5 = models.CharField(max_length=32,
+                           default="",
+                           blank=True)
+    sha256 = models.CharField(max_length=64, default="", blank=True, unique=True)
+    # TODO: Should file_path be CharField with max_length (but what)?
+    file_path = models.TextField()
+    add_date = models.DateTimeField('Date added', auto_now_add=True)
+    update_date = models.DateTimeField('Date updated', auto_now=True)
+    thumbnail_cover_image = models.ImageField(default=None, blank=True)
+    enlarged_cover_image = models.ImageField(default=None, blank=True)
+
+
 class Author(models.Model):
+    # TODO: test primary key if automatic set
     books = models.ManyToManyField(Book, blank=True)
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
@@ -61,16 +84,18 @@ class Author(models.Model):
 
 
 class Category(models.Model):
+
+    class Meta:
+        unique_together = (("category", "source"),)
+        verbose_name_plural = "categories"
+
     books = models.ManyToManyField(Book, blank=True)
-    # TODO: category should be unique
-    category = models.CharField(max_length=200)
+    # TODO: check that category is unique
+    category = models.CharField(max_length=200, unique=True)
     # TODO: add choices such as amazon, goodreads, personal
     source = models.CharField('Source of category', max_length=200)
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
-
-    class Meta:
-        verbose_name_plural = "categories"
 
     def __str__(self):
         return self.category
@@ -113,7 +138,8 @@ class Tag(models.Model):
         unique_together = (("tag", "source"),)
 
     books = models.ManyToManyField(Book, blank=True)
-    tag = models.CharField(max_length=200)
+    # TODO: check tag is unique
+    tag = models.CharField(max_length=200, unique=True)
     # TODO: add choices such as amazon, personal
     source = models.CharField('Source of tag',
                               max_length=200,

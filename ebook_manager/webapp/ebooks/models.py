@@ -20,6 +20,7 @@ class Book(models.Model):
                                default="",
                                blank=True,
                                primary_key=True)
+    # TODO: based on type of book id, check that the book id is valid
     id_type = models.CharField('Type of Book Id',
                                max_length=10,
                                choices=TypeOfBookId.choices)
@@ -85,20 +86,28 @@ class Author(models.Model):
 
 class Category(models.Model):
 
+    class SourceOfCategory(models.TextChoices):
+        AMAZON = 'A'
+        GOODREADS = 'G'
+        PERSONAL = 'P'
+        WIKIPEDIA = 'W'
+
     class Meta:
         unique_together = (("category", "source"),)
         verbose_name_plural = "categories"
 
     books = models.ManyToManyField(Book, blank=True)
     # TODO: check that category is unique
-    category = models.CharField(max_length=200, unique=True)
+    category = models.CharField(max_length=200)
     # TODO: add choices such as amazon, goodreads, personal
-    source = models.CharField('Source of category', max_length=200)
+    source = models.CharField('Source of category',
+                              max_length=200,
+                              choices=SourceOfCategory.choices)
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
 
     def __str__(self):
-        return self.category
+        return "{} [{}]".format(self.category, self.get_source_display())
 
 
 class Rating(models.Model):
@@ -108,12 +117,15 @@ class Rating(models.Model):
         GOODREADS = 'G'
         PERSONAL = 'P'
 
+    class Meta:
+        unique_together = (("book", "source"),)
+
     # TODO: primary key is (book_id, source)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     # TODO: add choices such as amazon, goodreads
     source = models.CharField('Source of rating',
                               max_length=200,
-                              primary_key=True)
+                              choices=SourceOfRating.choices)
     # TODO: FloatField instead of DecimalField?,
     # see https://docs.djangoproject.com/en/3.0/ref/models/fields/#floatfield
     rating = models.PositiveSmallIntegerField(
@@ -124,7 +136,10 @@ class Rating(models.Model):
     update_date = models.DateTimeField('Date updated', auto_now=True)
 
     def __str__(self):
-        return "{}: {}/5 [{}]".format(self.book.title, self.rating, self.source)
+        return "{}: {}/5, {} ratings [{}]".format(self.book.title,
+                                                  self.rating,
+                                                  self.nb_ratings,
+                                                  self.get_source_display())
 
 
 class Tag(models.Model):
@@ -139,7 +154,7 @@ class Tag(models.Model):
 
     books = models.ManyToManyField(Book, blank=True)
     # TODO: check tag is unique
-    tag = models.CharField(max_length=200, unique=True)
+    tag = models.CharField(max_length=200)
     # TODO: add choices such as amazon, personal
     source = models.CharField('Source of tag',
                               max_length=200,

@@ -21,10 +21,11 @@ class Book(models.Model):
                                blank=True,
                                primary_key=True)
     # TODO: based on type of book id, check that the book id is valid
+    # Required field
     id_type = models.CharField('Type of Book Id',
                                max_length=10,
                                choices=TypeOfBookId.choices)
-    # Title is required
+    # Required field
     title = models.CharField(max_length=200)
     series = models.CharField(max_length=200, default="", blank=True)
     publisher = models.CharField(max_length=200, default="", blank=True)
@@ -46,10 +47,14 @@ class Book(models.Model):
     enlarged_cover_image = models.ImageField(default=None, blank=True)
 
     def __str__(self):
-        return self.title
+        return "{} [{}]".format(self.title, self.book_id)
 
 
 class BookFile(models.Model):
+
+    class Meta:
+        unique_together = (("book", "md5", "file_path"), ("md5", "file_path"),)
+
     # Automatic primary key
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     pages = models.IntegerField(default=None, blank=True, null=True)
@@ -58,23 +63,28 @@ class BookFile(models.Model):
     size = models.CharField(max_length=10, default="", blank=True)
     # File extension. For example, PDF, EPUB, or MOBI
     extension = models.CharField(max_length=10, default="", blank=True)
+    # Required fields
     # md5 and sha256 are in hexadecimal
-    # TODO: test that md5 and sha256 should be unique
-    md5 = models.CharField(max_length=32,
-                           default="",
-                           blank=True)
-    sha256 = models.CharField(max_length=64, default="", blank=True, unique=True)
+    md5 = models.CharField(max_length=32)
+    sha256 = models.CharField(max_length=64)
     # TODO: Should file_path be CharField with max_length (but what)?
+    # Required field
     file_path = models.TextField()
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
     thumbnail_cover_image = models.ImageField(default=None, blank=True)
     enlarged_cover_image = models.ImageField(default=None, blank=True)
 
+    def __str__(self):
+        return "{} [{}]: {}".format(self.book.title,
+                                    self.book.book_id,
+                                    self.file_path)
+
 
 class Author(models.Model):
     # TODO: test primary key if automatic set
     books = models.ManyToManyField(Book, blank=True)
+    # Required fields
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
     add_date = models.DateTimeField('Date added', auto_now_add=True)

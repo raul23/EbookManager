@@ -16,6 +16,7 @@ class Book(models.Model):
         Paperback = 'P'
 
     # Primary key, e.g. ISBN-10 or ASIN
+    # TODO: change to id
     book_id = models.CharField(max_length=13,
                                default="",
                                blank=True,

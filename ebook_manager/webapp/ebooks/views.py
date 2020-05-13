@@ -1,13 +1,13 @@
 from django.http import Http404, HttpResponse
+from django.shortcuts import render
 
 from .models import Book
 
 
 def index(request):
-    # return HttpResponse("Hello, world. You're at the ebooks index.")
     latest_book_list = Book.objects.order_by('-add_date')[:3]
-    output = ', '.join([b.title for b in latest_book_list])
-    return HttpResponse(output)
+    context = {'latest_book_list': latest_book_list}
+    return render(request, 'ebooks/index.html', context)
 
 
 def book_detail(request, book_id):

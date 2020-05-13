@@ -5,6 +5,11 @@
     <title>Book detail</title>
 </head>
 <body>
-{{ book }}
+<h1>{{ book.title }}</h1>
+<ul>
+{% for author in book.author_set.all %}
+    <li>{{ author.first_name }} {{ author.last_name }}</li>
+{% endfor %}
+</ul>
 </body>
 </html>

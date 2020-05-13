@@ -11,9 +11,11 @@ def index(request):
 
 
 def book_detail(request, book_id):
-    if book_id.isalpha():
+    try:
+        book = Book.objects.get(pk=book_id)
+    except Book.DoesNotExist:
         raise Http404("Book does not exist")
-    return HttpResponse("You're looking at book %s." % book_id)
+    return render(request, 'ebooks/book_detail.html', {'book': book})
 
 
 def book_ratings(request, book_id):

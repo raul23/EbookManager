@@ -8,7 +8,7 @@
 {% if latest_book_list %}
     <ul>
     {% for book in latest_book_list %}
-        <li><a href="/ebooks/{{ book.book_id }}/">{{ book.title }}</a></li>
+        <li><a href="{% url 'ebooks:book_detail' book.book_id %}">{{ book.title }}</a></li>
     {% endfor %}
     </ul>
 {% else %}

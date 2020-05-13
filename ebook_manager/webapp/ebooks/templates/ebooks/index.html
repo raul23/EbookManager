@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ebooks index</title>
+</head>
+<body>
+{% if latest_book_list %}
+    <ul>
+    {% for book in latest_book_list %}
+        <li><a href="/ebooks/{{ book.book_id }}/">{{ book.title }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No books are available.</p>
+{% endif %}
+</body>
+</html>

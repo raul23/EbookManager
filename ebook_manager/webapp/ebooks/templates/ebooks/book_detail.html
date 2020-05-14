@@ -6,10 +6,20 @@
 </head>
 <body>
 <h1>{{ book.title }}</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
 <ul>
 {% for author in book.author_set.all %}
     <li>{{ author.first_name }} {{ author.last_name }}</li>
 {% endfor %}
 </ul>
+
+<form action="{% url 'ebooks:rate' book.book_id %}" method="post">
+    {% csrf_token %}
+    <input type="number" name="rating" id="id_rating" min="0">
+    <label for="id_rating">Rating</label><br>
+    <input type="submit" value="Rate">
+</form>
 </body>
 </html>

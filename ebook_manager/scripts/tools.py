@@ -108,6 +108,7 @@ def _get_data_about_fnames(dirpath, doc_types=_doc_types, recursive=False):
         -------
 
         """
+        # TODO: check _split_fname()
         ext = os.path.splitext(fname)[-1][1:]
         # Reject if filename is associated to a directory
         if os.path.isfile(os.path.join(dirpath, fname)):
@@ -263,7 +264,6 @@ def _split_fname(fname):
     root, ext = os.path.splitext(fname)
     ext = ext[1:]
     return root, ext
-
 
 def _undo_fix_extensions(metadata):
     """TODO

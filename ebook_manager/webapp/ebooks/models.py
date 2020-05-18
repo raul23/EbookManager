@@ -106,8 +106,12 @@ class AbstractBook(models.Model):
     update_date = models.DateTimeField('Date updated', auto_now=True)
     # TODO: ImageField requires the Pillow library
     # TODO: test images are loaded
-    thumbnail_cover_image = models.ImageField(default=None, blank=True)
-    enlarged_cover_image = models.ImageField(default=None, blank=True)
+    thumbnail_cover_image = models.ImageField(upload_to='cover_images',
+                                              default=None,
+                                              blank=True)
+    enlarged_cover_image = models.ImageField(upload_to='cover_images',
+                                             default=None,
+                                             blank=True)
 
 
 class Book(AbstractBook):

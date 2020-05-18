@@ -135,5 +135,9 @@ dmypy.json
 .idea/
 
 # Django directories
-mysite/
 migrations/
+mysite/
+
+# Django project files
+cover*.png
+test_data.json

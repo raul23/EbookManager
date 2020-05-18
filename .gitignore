@@ -138,6 +138,6 @@ dmypy.json
 migrations/
 mysite/
 
-# Django project files
-cover*.png
+# Django project files and directories
+cover_images/
 test_data.json

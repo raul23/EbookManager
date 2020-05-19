@@ -11,6 +11,7 @@ def init_var(var):
 def get_fields_to_display(model, beginning=None, ending=None, readonly=None,
                           exclude=None):
     # TODO: find better way
+    # TODO: add all required fields at the beginning
     # TODO: accessing protected attribute _meta
     meta = getattr(model, '_meta', None)
     if meta is None:
@@ -59,7 +60,7 @@ class BookFileAdmin(admin.ModelAdmin):
     exclude = ('book_format',)
     fields = get_fields_to_display(
         model=BookFile,
-        beginning=['title', 'file_path', 'books'],
+        beginning=['book_id', 'book_id_type', 'title', 'file_path'],
         readonly=readonly_fields,
         exclude=exclude)
 

@@ -192,12 +192,12 @@ class Category(models.Model):
         unique_together = (("category", "source"),)
         verbose_name_plural = "categories"
 
-    books = models.ManyToManyField(Book, blank=True)
     # TODO: check that category is unique
     category = models.CharField(max_length=200)
     source = models.CharField('Source of category',
                               max_length=200,
                               choices=SourceOfCategory.choices)
+    books = models.ManyToManyField(Book, blank=True)
     # Automatic fields
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
@@ -252,13 +252,13 @@ class Tag(models.Model):
     class Meta:
         unique_together = (("tag", "source"),)
 
-    books = models.ManyToManyField(Book, blank=True)
     # TODO: check tag is unique
     tag = models.CharField(max_length=200)
     # TODO: add choices such as amazon, personal
     source = models.CharField('Source of tag',
                               max_length=200,
                               choices=SourceOfTag.choices)
+    books = models.ManyToManyField(Book, blank=True)
     # Automatic fields
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)

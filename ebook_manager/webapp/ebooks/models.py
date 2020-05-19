@@ -42,24 +42,18 @@ class AbstractBook(models.Model):
     class Meta:
         abstract = True
 
-    # Title is required
-    title = models.CharField(max_length=200)
     # TODO:
-    # - identifiers should be unique; right now you could have two books with
-    #   the same book_id (e.g. ISBN)
-    # - get edition too
     # - isbn10 can be converted to isbn13, see https://bit.ly/3bxdP1y [Wikipedia]
     # - validate book identifiers
     book_id = models.CharField('Book Identifier (e.g. ISBN-10 or ASIN)',
-                               max_length=20,
-                               default="",
-                               blank=True)
+                               max_length=20)
     # TODO: based on type of book id, check that the book id is valid
     book_id_type = models.CharField('Type of Book Identifier',
                                     max_length=10,
-                                    default="",
-                                    blank=True,
                                     choices=type_of_book_id)
+    # Title is required
+    title = models.CharField(max_length=200)
+    # TODO: get edition too
     series = models.CharField(max_length=200, default="", blank=True)
     publisher = models.CharField(max_length=200, default="", blank=True)
     pub_year = models.PositiveIntegerField(
@@ -149,6 +143,9 @@ class BookFile(AbstractBook):
     # book is required field
     # TODO: test on_delete
     books = models.ManyToManyField(Book, blank=True)
+    # TODO: Should file_path be CharField with max_length (but what)?
+    # file_path is required field
+    file_path = models.TextField(validators=[validate_ebook_file])
     # Size is given in multiples of bytes, and the unit symbol is shown beside
     # the file size, e.g. 660 KB
     # TODO: should be IntegerField
@@ -164,9 +161,6 @@ class BookFile(AbstractBook):
     # TODO: validate these two fields
     md5 = models.CharField('MD5', max_length=32, default="")
     sha256 = models.CharField('SHA256', max_length=64, default="")
-    # TODO: Should file_path be CharField with max_length (but what)?
-    # file_path is required field
-    file_path = models.TextField(validators=[validate_ebook_file])
 
     def __str__(self):
         return "{} [{}]: {}".format(self.title,

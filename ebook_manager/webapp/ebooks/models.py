@@ -46,6 +46,7 @@ class AbstractBook(models.Model):
     # - isbn10 can be converted to isbn13, see https://bit.ly/3bxdP1y [Wikipedia]
     # - validate book identifiers
     book_id = models.CharField('Book Identifier (e.g. ISBN-10 or ASIN)',
+                               primary_key=True,
                                max_length=20)
     # TODO: based on type of book id, check that the book id is valid
     book_id_type = models.CharField('Type of Book Identifier',
@@ -228,7 +229,7 @@ class Rating(models.Model):
         'Average rating',
         validators=[MinValueValidator(1),
                     MaxValueValidator(5)])
-    # nb_ratings >= 0
+    # nb_ratings >= 1
     nb_ratings = models.PositiveIntegerField('Number of ratings',
                                              validators=[MinValueValidator(1)])
     # Automatic fields
@@ -236,10 +237,11 @@ class Rating(models.Model):
     update_date = models.DateTimeField('Date updated', auto_now=True)
 
     def __str__(self):
-        return "{}: {}/5, {} ratings [{}]".format(self.book.title,
-                                                  self.avg_rating,
-                                                  self.nb_ratings,
-                                                  self.get_source_display())
+        return "{} [{}]: {}/5, {} ratings [{}]".format(self.book.title,
+                                                       self.book.book_id,
+                                                       self.avg_rating,
+                                                       self.nb_ratings,
+                                                       self.get_source_display())
 
 
 class Tag(models.Model):

@@ -224,7 +224,7 @@ class Rating(models.Model):
                               choices=SourceOfRating.choices)
     # TODO: FloatField instead of DecimalField?,
     # see https://docs.djangoproject.com/en/3.0/ref/models/fields/#floatfield
-    # 1 <= avg_rating <= 1
+    # 1 <= avg_rating <= 5
     avg_rating = models.FloatField(
         'Average rating',
         validators=[MinValueValidator(1),

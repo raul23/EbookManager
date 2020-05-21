@@ -9,7 +9,7 @@
 <h1>{{ book.title }}</h1>
 <ul>
 {% for rating in book.rating_set.all %}
-<li>{{ rating.get_source_display }} -- {{  rating.avg_rating|floatformat:-1 }} /5 -- {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}</li>
+<li>{{ rating.get_source_display }} ---- {{  rating.avg_rating|floatformat:-1 }}/5 ---- {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}</li>
 {% endfor %}
 </ul>
 

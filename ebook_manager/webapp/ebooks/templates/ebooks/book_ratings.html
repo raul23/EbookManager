@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book ratings</title>
+</head>
+<body>
+
+<h1>{{ book.title }}</h1>
+<ul>
+{% for rating in book.rating_set.all %}
+<li>{{ rating.get_source_display }} -- {{  rating.avg_rating|floatformat:-1 }} /5 -- {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}</li>
+{% endfor %}
+</ul>
+
+<a href="{% url 'ebooks:book_detail' book.book_id %}">Rate again?</a>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 
 from django.core.exceptions import ValidationError
@@ -6,7 +7,13 @@ from django.core.validators import (MinValueValidator, MaxValueValidator,
                                     RegexValidator)
 from django.db import models
 
+import pyisbn
+
 from . import filtered_iso_639_languages
+
+
+def validate_book_id(book_id):
+    pass
 
 
 def validate_ebook_file(filepath):
@@ -37,21 +44,18 @@ def validate_positive_number(value):
 
 class AbstractBook(models.Model):
     # TODO: check if better way than repeat type
-    type_of_book_id = [(t, t) for t in ['ASIN', 'ISBN10', 'ISBN13']]
+    allowed_book_id_types = ('ASIN', 'ISBN')
+    choices_book_id_types = [(t, t) for t in allowed_book_id_types]
 
     class Meta:
         abstract = True
 
-    # TODO:
-    # - isbn10 can be converted to isbn13, see https://bit.ly/3bxdP1y [Wikipedia]
-    # - validate book identifiers
     book_id = models.CharField('Book Identifier (e.g. ISBN-10 or ASIN)',
                                primary_key=True,
                                max_length=20)
-    # TODO: based on type of book id, check that the book id is valid
     book_id_type = models.CharField('Type of Book Identifier',
                                     max_length=10,
-                                    choices=type_of_book_id)
+                                    choices=choices_book_id_types)
     # Title is required
     title = models.CharField(max_length=200)
     # TODO: get edition too
@@ -86,7 +90,6 @@ class AbstractBook(models.Model):
                               validators=[RegexValidator(r'^\d{1,10}$')],
                               default="",
                               blank=True)
-    # TODO: add validators for asin
     asin = models.CharField('ASIN', max_length=10, default="", blank=True)
     # pages > 0
     pages = models.IntegerField(default=None,
@@ -100,13 +103,40 @@ class AbstractBook(models.Model):
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
     # TODO: ImageField requires the Pillow library
-    # TODO: test images are loaded
     thumbnail_cover_image = models.ImageField(upload_to='cover_images',
                                               default=None,
                                               blank=True)
     enlarged_cover_image = models.ImageField(upload_to='cover_images',
                                              default=None,
                                              blank=True)
+
+    def clean(self):
+        # TODO: add check constraints
+        # Validate book identifier
+        if self.book_id_type == 'ISBN':
+            if pyisbn.validate(self.book_id):
+                if len(self.book_id) == 10:
+                    self.isbn10 = self.book_id
+                    self.isbn13 = pyisbn.convert(self.book_id)
+                else:
+                    self.isbn13 = self.book_id
+                    self.isbn10 = pyisbn.convert(self.book_id)
+            else:
+                raise ValidationError(
+                    {'book_id': '{} is an invalid ISBN'.format(self.book_id)})
+        elif self.book_id_type == 'ASIN':
+            regex = r"[A-Z0-9]{10}"
+            # Remove whitespaces
+            self.book_id = self.book_id.strip()
+            if len(self.book_id) == 10 and re.fullmatch(regex, self.book_id):
+                self.asin = self.book_id
+            else:
+                raise ValidationError(
+                    {'book_id': '{} is an invalid ASIN'.format(self.book_id)})
+        else:
+            raise ValidationError(
+                {'book_id_type': 'Allowed Book Id types: {}'.format(
+                    self.allowed_book_id_types)})
 
 
 class Book(AbstractBook):

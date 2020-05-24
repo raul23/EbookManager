@@ -138,6 +138,9 @@ class AbstractBook(models.Model):
                 {'book_id_type': 'Allowed Book Id types: {}'.format(
                     self.allowed_book_id_types)})
 
+    def _validate_book_id(self):
+        pass
+
 
 class Book(AbstractBook):
 

@@ -12,10 +12,6 @@ import pyisbn
 from . import filtered_iso_639_languages
 
 
-def validate_book_id(book_id):
-    pass
-
-
 def validate_ebook_file(filepath):
     # Check that the file exists
     if os.path.exists(filepath):
@@ -111,6 +107,9 @@ class AbstractBook(models.Model):
                                              blank=True)
 
     def clean(self):
+        self._validate_book_id()
+
+    def _validate_book_id(self):
         # TODO: add check constraints
         # Validate book identifier
         if self.book_id_type == 'ISBN':
@@ -137,9 +136,6 @@ class AbstractBook(models.Model):
             raise ValidationError(
                 {'book_id_type': 'Allowed Book Id types: {}'.format(
                     self.allowed_book_id_types)})
-
-    def _validate_book_id(self):
-        pass
 
 
 class Book(AbstractBook):

@@ -2,6 +2,8 @@ import json
 import os
 
 import django
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.utils import IntegrityError
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
 django.setup()
 
@@ -39,36 +41,65 @@ def load_iso_639_lang():
 def populate_db():
 
     def save_data_with_mtom_rel(tb_data, class_):
-        for d in tb_data:
-            books = d['books']
-            del d['books']
-            tb_obj = class_.objects.create(**d)
+        for obj_data in tb_data:
+            try:
+                books = obj_data['books']
+                del obj_data['books']
+                tb_obj = class_(**obj_data)
+                tb_obj.full_clean()
+            except KeyError as e:
+                print(e)
+                continue
+            except ValidationError as e:
+                for msg in e.message_dict['__all__']:
+                    print(msg)
+                continue
+            else:
+                tb_obj.save()
+            # tb_obj = class_.objects.create(**obj_data)
             for b_id in books:
                 try:
                     book = Book.objects.get(book_id=b_id)
                     tb_obj.books.add(book)
-                except Book.DoesNotExist:
-                    continue
+                except (Book.DoesNotExist, IntegrityError) as e:
+                    print(e)
 
     def save_data_with_foreign_rel(tb_data, class_):
-        for d in tb_data:
-            b_id = d['book']
+        for obj_data in tb_data:
             try:
+                b_id = obj_data['book']
                 book = Book.objects.get(book_id=b_id)
-                d['book'] = book
-                class_.objects.create(**d)
-            except Book.DoesNotExist:
-                continue
+                obj_data['book'] = book
+                tb_obj = class_(**obj_data)
+                tb_obj.full_clean()
+                # class_.objects.create(**obj_data)
+            except (KeyError, Book.DoesNotExist) as e:
+                print(e)
+            except ValidationError as e:
+                for msg in e.message_dict['__all__']:
+                    print(msg)
+            else:
+                tb_obj.save()
 
     with open('test_data.json') as f:
         data = json.load(f)
 
     # Save books
     for book_data in data['Books']:
-        Book.objects.create(**book_data)
+        try:
+            book = Book.objects.get(book_id=book_data['book_id'])
+        except KeyError as e:
+            print(e)
+        except ObjectDoesNotExist:
+            book = Book(**book_data)
+            book.full_clean()
+            book.save()
+            # Book.objects.create(**book_data)
+        else:
+            print("Book '{}' already exists".format(str(book)))
 
-    save_data_with_mtom_rel(data['BookFiles'], BookFile)
     save_data_with_mtom_rel(data['Authors'], Author)
+    save_data_with_mtom_rel(data['BookFiles'], BookFile)
     save_data_with_mtom_rel(data['Categories'], Category)
     save_data_with_mtom_rel(data['Tags'], Tag)
     save_data_with_foreign_rel(data['Ratings'], Rating)
@@ -88,3 +119,14 @@ if __name__ == '__main__':
     # load_iso_639_lang()
     populate_db()
     # clear_tb()
+
+
+def clean(self):
+    import ipdb
+    ipdb.set_trace()
+    if self.books.count():
+        for author in Author.objects.filter(name=self.name):
+            if author.books.count() == 0:
+                raise ValidationError({
+                    'name': "There is already the author '{}' with no books".format(
+                        author.name)})

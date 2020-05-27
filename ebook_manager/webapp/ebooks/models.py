@@ -6,6 +6,9 @@ from django.core.exceptions import ValidationError
 from django.core.validators import (MinValueValidator, MaxValueValidator,
                                     RegexValidator)
 from django.db import models
+from django.db.models.signals import m2m_changed
+from django.db.utils import IntegrityError
+from django.dispatch import receiver
 
 import pyisbn
 
@@ -36,6 +39,29 @@ def validate_ebook_file(filepath):
 def validate_positive_number(value):
     if value <= 0:
         raise ValidationError('Ensure this value is greater than 0.')
+
+
+class UniqueErrorMessage(models.Model):
+    class Meta:
+        abstract = True
+
+    def unique_error_message(self, model_class, unique_check):
+        error = super(UniqueErrorMessage, self).unique_error_message(
+            model_class, unique_check)
+        if len(unique_check) > 1:
+            name_value = []
+            for n in unique_check:
+                value = getattr(self, n)
+                # TODO: accessing protected property
+                vn = self._meta.get_field(n)._verbose_name
+                if vn:
+                    name_value.append("{}='{}'".format(vn, value))
+                else:
+                    name_value.append("{}='{}'".format(n, value))
+            error.message = "{model_name} with <{unique_fields}> already exists".format(
+                model_name=str(model_class).split('.')[-1][:-2],
+                unique_fields=', '.join(name_value))
+        return error
 
 
 class AbstractBook(models.Model):
@@ -106,6 +132,7 @@ class AbstractBook(models.Model):
                                              default=None,
                                              blank=True)
 
+    # TODO: only Book not BookFile
     def clean(self):
         self._validate_book_id()
 
@@ -145,7 +172,6 @@ class Book(AbstractBook):
         Kindle = 'K'
         Paperback = 'P'
 
-    # NOTE: Automatic primary key
     # Book format is required
     # For example, hardcover and paperback
     book_format = models.CharField(max_length=10,
@@ -154,13 +180,10 @@ class Book(AbstractBook):
                                    choices=BookFormat.choices)
 
     def __str__(self):
-        if self.book_id:
-            return "{} [{}]".format(self.title, self.book_id)
-        else:
-            return self.title
+        return "{} [{}]".format(self.title, self.book_id)
 
 
-class BookFile(AbstractBook):
+class BookFile(AbstractBook, UniqueErrorMessage):
     # TODO: extensions already found in scripts/tools.py
     allowed_extensions = ('azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub',
                           'gz', 'mobi', 'pdf', 'rar', 'zip',)
@@ -170,6 +193,7 @@ class BookFile(AbstractBook):
         unique_together = (("md5", "file_path"),)
 
     # Automatic primary key
+    book_id = models.CharField('Book Identifier (e.g. ISBN-10 or ASIN)', max_length=20)
     # book is required field
     # TODO: test on_delete
     books = models.ManyToManyField(Book, blank=True)
@@ -200,7 +224,10 @@ class BookFile(AbstractBook):
 
 class Author(models.Model):
     # TODO: test primary key if set automatic
-    books = models.ManyToManyField(Book, blank=True)
+    books = models.ManyToManyField(Book,
+                                   blank=True,
+                                   related_name='authors',
+                                   through='Authorship')
     # Required fields
     name = models.CharField(max_length=200)
     add_date = models.DateTimeField('Date added', auto_now_add=True)
@@ -210,7 +237,42 @@ class Author(models.Model):
         return self.name
 
 
-class Category(models.Model):
+class Authorship(UniqueErrorMessage):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+
+    class Meta:
+        # TODO: doesn't do anything
+        # TODO: it is recommended to use UniqueConstraint. In the docs there is
+        # a note stating unique_together may be deprecated in the future
+        # Ref.: https://stackoverflow.com/a/49817401
+        unique_together = (("author", "book"),)
+        verbose_name_plural = "Authorship"
+
+    def clean(self):
+        # TODO: do something
+        pass
+
+    def __str__(self):
+        return ' '
+
+
+@receiver(m2m_changed, sender=Author.books.through)
+def verify_uniqueness(sender, **kwargs):
+    author = kwargs.get('instance', None)
+    action = kwargs.get('action', None)
+    books = kwargs.get('pk_set', None)
+
+    if action == 'pre_add':
+        for book in books:
+            if Author.objects.filter(name=author.name).filter(books=book):
+                raise IntegrityError("Author with name '{author_name}' already "
+                                     "exists for book '{book_title}'".format(
+                                      author_name=author.name,
+                                      book_title=Book.objects.get(pk=book)))
+
+
+class Category(UniqueErrorMessage):
 
     class SourceOfCategory(models.TextChoices):
         AMAZON = 'A'
@@ -236,7 +298,7 @@ class Category(models.Model):
         return "{} [{}]".format(self.category, self.get_source_display())
 
 
-class Rating(models.Model):
+class Rating(UniqueErrorMessage):
 
     class SourceOfRating(models.TextChoices):
         AMAZON = 'A'
@@ -273,7 +335,7 @@ class Rating(models.Model):
                                                        self.get_source_display())
 
 
-class Tag(models.Model):
+class Tag(UniqueErrorMessage):
 
     class SourceOfTag(models.TextChoices):
         AMAZON = 'A'

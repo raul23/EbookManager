@@ -119,14 +119,3 @@ if __name__ == '__main__':
     # load_iso_639_lang()
     populate_db()
     # clear_tb()
-
-
-def clean(self):
-    import ipdb
-    ipdb.set_trace()
-    if self.books.count():
-        for author in Author.objects.filter(name=self.name):
-            if author.books.count() == 0:
-                raise ValidationError({
-                    'name': "There is already the author '{}' with no books".format(
-                        author.name)})

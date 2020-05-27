@@ -16,9 +16,11 @@ def get_fields_to_display(model, beginning=None, ending=None, readonly=None,
     meta = getattr(model, '_meta', None)
     if meta is None:
         raise AttributeError("model {} doesn't have the attribute _meta".format(model))
-    all_fields = getattr(meta, 'fields', None)
-    if all_fields is None:
+    get_fields = getattr(meta, 'get_fields', None)
+    if get_fields is None:
         raise AttributeError("model {} doesn't have the attribute fields".format(model))
+    else:
+        all_fields = get_fields()
     beginning = init_var(beginning)
     ending = init_var(ending)
     readonly = init_var(readonly)
@@ -47,12 +49,23 @@ def get_fields_to_display(model, beginning=None, ending=None, readonly=None,
     return fields_to_keep
 
 
+class AuthorshipInline(admin.TabularInline):
+    model = Author.books.through
+    extra = 3
+
+
+class AuthorAdmin(admin.ModelAdmin):
+    # exclude = ('books',)
+    inlines = [AuthorshipInline]
+
+
 class BookAdmin(admin.ModelAdmin):
     exclude = ('isbn10', 'isbn13', 'asin',)
     fields = get_fields_to_display(
         model=Book,
         ending=['book_format', 'thumbnail_cover_image', 'enlarged_cover_image'],
         exclude=exclude)
+    inlines = [AuthorshipInline]
 
 
 class BookFileAdmin(admin.ModelAdmin):
@@ -60,12 +73,13 @@ class BookFileAdmin(admin.ModelAdmin):
     exclude = ('book_format',)
     fields = get_fields_to_display(
         model=BookFile,
-        beginning=['book_id', 'book_id_type', 'title', 'file_path'],
+        beginning=['book_id', 'book_id_type', 'title', 'file_path', 'books'],
         readonly=readonly_fields,
         exclude=exclude)
 
 
-admin.site.register(Author)
+# TODO: add fieldsets, see Part 7 of django tutorial
+admin.site.register(Author, AuthorAdmin)
 admin.site.register(Book, BookAdmin)
 admin.site.register(BookFile, BookFileAdmin)
 admin.site.register(Category)

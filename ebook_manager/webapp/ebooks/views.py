@@ -61,3 +61,9 @@ def rate(request, book_id):
     # user hits the Back button.
     return HttpResponseRedirect(
         reverse('ebooks:book_ratings', args=(book.book_id,)))
+
+
+def upload_files(request):
+    import ipdb
+    ipdb.set_trace()
+    tmp_files = request.FILES.getlist('files')

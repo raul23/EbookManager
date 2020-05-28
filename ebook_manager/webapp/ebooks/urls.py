@@ -1,14 +1,16 @@
-from django.urls import path
+from django.urls import path, re_path
 
 from . import apps, views
 
 
 app_name = apps.EbooksConfig.name
 urlpatterns = [
+    # ex: /ebooks/add_files/
+    path('{}/upload_files/'.format(app_name), views.upload_files, name='upload_files'),
     # ex: /ebooks/
     # the 'name' value as called by the {% url %} template tag
-    path('', views.IndexView.as_view(), name='index'),
-    path('{}/'.format(app_name), views.IndexView.as_view(), name='index'),
+    re_path(r'^$', views.IndexView.as_view(), name='index'),
+    re_path(r'^{}/$'.format(app_name), views.IndexView.as_view(), name='index'),
     # ex: /ebooks/123456790/
     # TODO: slug?
     path('{}/<slug:pk>/'.format(app_name),

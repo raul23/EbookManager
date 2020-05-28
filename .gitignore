@@ -140,4 +140,5 @@ mysite/
 
 # Django project files and directories
 cover_images/
+remove_chars_in_filename.py
 test_data.json

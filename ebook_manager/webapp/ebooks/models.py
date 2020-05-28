@@ -189,6 +189,7 @@ class BookFile(AbstractBook, UniqueErrorMessage):
                           'gz', 'mobi', 'pdf', 'rar', 'zip',)
 
     class Meta:
+        # TODO: remove this and use unique on md5 and sha256 only
         # TODO: test combinations
         unique_together = (("md5", "file_path"),)
 
@@ -212,7 +213,8 @@ class BookFile(AbstractBook, UniqueErrorMessage):
                                  default="MB",
                                  editable=False)
     # md5 and sha256 are in hexadecimal
-    # TODO: validate these two fields
+    # TODO: validate both fields
+    # TODO: use unique on both files
     md5 = models.CharField('MD5', max_length=32, default="")
     sha256 = models.CharField('SHA256', max_length=64, default="")
 

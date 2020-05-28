@@ -114,8 +114,50 @@ def clear_tb():
     Tag.objects.all().delete()
 
 
+# Built-in modules
+import hashlib
+import re
+# Third-party modules
+import pyisbn
+# Personal modules
+from ebooks.apps import EbooksConfig
+
+
+class ProcessFile:
+    def __init__(self, file):
+        self.file = file
+        self.isbn = None
+        self.asin = None
+        self._unwanted_chars = EbooksConfig.unwanted_chars
+
+    def check_md5_in_db(self):
+        # Compute file's md5 and sha256
+        m = hashlib.sha256()
+
+
+    def get_isbn_from_filename(self):
+        # TODO: getter?
+        if self.isbn:
+            return self.isbn
+        # Extract ISBN or ASIN from filename using regex
+        regex_isbn10 = r"[A-Z0-9]{10}"
+        regex_isbn13 = r"[\-A-Z0-9]{13,}"
+        for isbn in re.findall(regex_isbn13, filename):
+            if pyisbn.validate(isbn):
+                pass
+        # Get ISBN or ASIN by doing an Amazon search
+
+    def remove_chars_in_filename(self):
+        pass
+
+
 if __name__ == '__main__':
     # generate_iso_639_lang()
     # load_iso_639_lang()
     populate_db()
     # clear_tb()
+    tmp_files = request.FILES.getlist('files')
+    for tmpf in tmp_files:
+        # Get ISBN from filename
+        filename = tmpf.name
+

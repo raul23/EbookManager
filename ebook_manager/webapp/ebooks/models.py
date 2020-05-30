@@ -12,7 +12,7 @@ from django.dispatch import receiver
 
 import pyisbn
 
-from . import filtered_iso_639_languages
+from .data import filtered_iso_639_languages
 
 
 def validate_ebook_file(filepath):

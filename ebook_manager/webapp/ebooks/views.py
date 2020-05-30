@@ -67,3 +67,6 @@ def upload_files(request):
     import ipdb
     ipdb.set_trace()
     tmp_files = request.FILES.getlist('files')
+    for tmpf in tmp_files:
+        # Get ISBN from filename
+        filename = tmpf.name

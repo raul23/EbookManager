@@ -15,7 +15,7 @@ class ProcessFile:
         self.asin = None
         self._unwanted_chars = EbooksConfig.unwanted_chars
 
-    def _get_md5(self):
+    def _get_hash(self):
         # Ref.: https://stackoverflow.com/a/38719060
         hash = hashlib.md5()
         for chunk in self.file.chunks(chunk_size=self.chunk_size):

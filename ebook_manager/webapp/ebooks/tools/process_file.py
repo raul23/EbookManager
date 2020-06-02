@@ -24,7 +24,8 @@ class ProcessFile:
 
     def check_hash_in_db(self):
         # Compute file's md5 and sha256
-        m = hashlib.sha256()
+        hash = self._get_hash()
+        # Check if computed hash is already in db
 
     def get_isbn_from_filename(self):
         # TODO: getter?

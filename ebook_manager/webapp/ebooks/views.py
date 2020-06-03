@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.views import generic
 
 from .models import Book, Rating
+from .tools.process_file import ProcessFile
 
 
 class IndexView(generic.ListView):
@@ -68,5 +69,8 @@ def upload_files(request):
     ipdb.set_trace()
     tmp_files = request.FILES.getlist('files')
     for tmpf in tmp_files:
+        # Process file
+        pf = ProcessFile(tmpf)
+        pf.check_hash_in_db()
         # Get ISBN from filename
         filename = tmpf.name

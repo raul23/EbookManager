@@ -4,17 +4,22 @@ import re
 import pyisbn
 
 
-class ProcessFile:
+class FileProcessor:
     def __init__(self, file, chunk_size=128 * hashlib.md5().block_size,
                  unwanted_chars=None):
         self.file = file
+        self.file_hash = None
         # Ref.: https://stackoverflow.com/a/11143944
         self.chunk_size = chunk_size
         self.isbn = None
         self.asin = None
         self.unwanted_chars = unwanted_chars
 
-    def _get_hash(self, hash_factory=hashlib.md5):
+    def _is_hash_in_db(self):
+        # Check if file hash is already in db
+        pass
+
+    def _compute_hash(self, hash_factory=hashlib.md5):
         # Ref.:
         # - https://stackoverflow.com/a/38719060
         # - https://stackoverflow.com/a/4213255
@@ -23,13 +28,7 @@ class ProcessFile:
             hash.update(chunk)
         return hash.hexdigest()
 
-    def check_hash_in_db(self):
-        # Compute file's md5 and sha256
-        md5_hash = self._get_hash()
-        sha256_hash = self._get_hash(hashlib.sha256)
-        # Check if computed hash is already in db
-
-    def get_isbn_from_filename(self):
+    def _get_isbn_from_filename(self):
         # TODO: getter?
         if self.isbn:
             return self.isbn
@@ -41,9 +40,14 @@ class ProcessFile:
                 pass
         # Get ISBN or ASIN by doing an Amazon search
 
-    def remove_chars_in_filename(self):
+    def _remove_chars_in_filename(self):
         pass
 
+    def start_processing(self):
+        # Compute file's md5
+        self._compute_hash()
+        # Check if file hash is in db
+        if not self._is_hash_in_db():
+            pass
+        #
 
-def process_file(file, **kargs):
-    pf = ProcessFile(file, **kargs)

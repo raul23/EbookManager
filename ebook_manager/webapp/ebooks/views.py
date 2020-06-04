@@ -3,8 +3,9 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views import generic
 
+from .apps import EbooksConfig
 from .models import Book, Rating
-from .tools.process_file import ProcessFile
+from .tools.file_processor import FileProcessor
 
 
 class IndexView(generic.ListView):
@@ -70,7 +71,4 @@ def upload_files(request):
     tmp_files = request.FILES.getlist('files')
     for tmpf in tmp_files:
         # Process file
-        pf = ProcessFile(tmpf)
-        pf.check_hash_in_db()
-        # Get ISBN from filename
-        filename = tmpf.name
+        FileProcessor(tmpf, **EbooksConfig.process_file_cfg).start_processing()

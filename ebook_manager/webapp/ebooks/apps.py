@@ -7,5 +7,4 @@ from ebooks.data.remove_chars_in_filename import LIST_CHARS
 class EbooksConfig(AppConfig):
     name = 'ebooks'
     # TODO: remove package import
-    # remove_chars_in_filename = ['- chars to remove', ]
-    unwanted_chars = LIST_CHARS
+    process_file_cfg = {'unwanted_chars': LIST_CHARS}

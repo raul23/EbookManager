@@ -1,20 +1,18 @@
-# Built-in modules
 import hashlib
 import re
-# Third-party modules
+
 import pyisbn
-# Personal modules
-from ebooks.apps import EbooksConfig
 
 
 class ProcessFile:
-    def __init__(self, file):
+    def __init__(self, file, chunk_size=128 * hashlib.md5().block_size,
+                 unwanted_chars=None):
         self.file = file
         # Ref.: https://stackoverflow.com/a/11143944
-        self.chunk_size = 128 * hashlib.md5().block_size
+        self.chunk_size = chunk_size
         self.isbn = None
         self.asin = None
-        self._unwanted_chars = EbooksConfig.unwanted_chars
+        self.unwanted_chars = unwanted_chars
 
     def _get_hash(self, hash_factory=hashlib.md5):
         # Ref.:
@@ -45,3 +43,7 @@ class ProcessFile:
 
     def remove_chars_in_filename(self):
         pass
+
+
+def process_file(file, **kargs):
+    pf = ProcessFile(file, **kargs)

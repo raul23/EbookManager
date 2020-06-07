@@ -34,7 +34,7 @@ class FileProcessor:
             hash.update(chunk)
         return hash.hexdigest()
 
-    def _amazon_search(self, keywords):
+    def _search_amazon(self, keywords):
         pass
 
     def _set_asin_from_filename(self):
@@ -82,10 +82,10 @@ class FileProcessor:
         # 1. Pre-processing on the filename
         self._remove_chars_in_filename()
         if self._set_isbns_from_filename():  # 2. ISBN
-            self._amazon_search(self.isbn10)
+            self._search_amazon(self.isbn10)
         elif self._set_asin_from_filename():  # 3. ASIN
-            self._amazon_search(self.asin)
-        elif self._amazon_search(self.filename):  # 4. Amazon search
+            self._search_amazon(self.asin)
+        elif self._search_amazon(self.filename):  # 4. Amazon search
             pass
 
 

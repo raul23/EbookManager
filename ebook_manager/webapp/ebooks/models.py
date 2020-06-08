@@ -203,11 +203,11 @@ class BookFile(AbstractBook, UniqueErrorMessage):
     file_path = models.TextField(validators=[validate_ebook_file])
     # Size is given in multiples of bytes, and the unit symbol is shown beside
     # the file size, e.g. 660 KB
-    # TODO: should be IntegerField
     size = models.CharField('File size',
                             max_length=10,
-                            default="MB",
+                            default="0",
                             editable=False)
+    # TODO: remove this variable
     size_unit = models.CharField('Size unit',
                                  max_length=2,
                                  default="MB",

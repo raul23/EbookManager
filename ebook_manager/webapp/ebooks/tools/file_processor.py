@@ -3,6 +3,8 @@ import re
 
 import pyisbn
 
+from ebooks.models import BookFile
+
 
 class FileProcessor:
     def __init__(self, file, chunk_size=128 * hashlib.md5().block_size,
@@ -12,20 +14,26 @@ class FileProcessor:
         self.filename = file.name
         self.size = file.size
         self.content_type = file.content_type
-        self.md5 = None
-        self.sha256 = None
         # Ref.: https://stackoverflow.com/a/11143944
         self.chunk_size = chunk_size
+        self.md5 = self._get_hash()
+        self.sha256 = self._get_hash(hashlib.sha256)
         self.isbn10 = None
         self.isbn13 = None
         self.asin = None
         self.unwanted_chars = unwanted_chars
 
-    def _is_hash_in_db(self):
+    @staticmethod
+    def _get_bookfile_from_db(kwargs):
         # Check if file hash is already in db
-        pass
+        try:
+            book_file = BookFile.objects.get(**kwargs)
+        except BookFile.DoesNotExist:
+            return None
+        else:
+            return book_file
 
-    def _compute_hash(self, hash_factory=hashlib.md5):
+    def _get_hash(self, hash_factory=hashlib.md5):
         # Ref.:
         # - https://stackoverflow.com/a/38719060
         # - https://stackoverflow.com/a/4213255
@@ -63,13 +71,10 @@ class FileProcessor:
             self.filename = self.filename.replace(chars, '')
 
     def start_processing(self):
-        # TODO: check first if file has already been processed
-        # Compute file's md5
-        self._compute_hash()
-        # TODO: compute file's sha256
         # Check if file hash is in db
-        if self._is_hash_in_db():
-            pass
+        bookfile = self._get_bookfile_from_db(dict(md5=self.md5))
+        if bookfile:
+            return bookfile
         # Since file hash is not found in db, file is new and we will do the
         # following to get the ISBN or ASIN:
         # 1. Pre-processing on the filename

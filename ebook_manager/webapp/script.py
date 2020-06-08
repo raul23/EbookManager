@@ -81,7 +81,8 @@ def populate_db():
             else:
                 tb_obj.save()
 
-    with open('test_data.json') as f:
+    filepath = os.path.join(os.getcwd(), 'ebooks', 'data', 'test_data.json')
+    with open(filepath) as f:
         data = json.load(f)
 
     # Save books

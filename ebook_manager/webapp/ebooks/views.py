@@ -71,4 +71,4 @@ def upload_files(request):
     tmp_files = request.FILES.getlist('files')
     for tmpf in tmp_files:
         # Process file
-        FileProcessor(tmpf, **EbooksConfig.process_file_cfg).start_processing()
+        FileProcessor(tmpf, **EbooksConfig.file_processor_cfg).start_processing()

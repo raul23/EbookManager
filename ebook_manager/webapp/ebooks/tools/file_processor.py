@@ -8,7 +8,7 @@ from ebooks.models import BookFile
 
 class FileProcessor:
     def __init__(self, file, chunk_size=128 * hashlib.md5().block_size,
-                 unwanted_chars=None):
+                 unwanted_chars_in_filename=None, filename_templates=None):
         # TODO: make sure file is of valid type
         self.file = file
         self.filename = file.name
@@ -21,7 +21,8 @@ class FileProcessor:
         self.isbn10 = None
         self.isbn13 = None
         self.asin = None
-        self.unwanted_chars = unwanted_chars
+        self.unwanted_chars_in_filename = unwanted_chars_in_filename
+        self.filename_templates = filename_templates
 
     @staticmethod
     def _get_bookfile_from_db(kwargs):
@@ -67,10 +68,13 @@ class FileProcessor:
         return False
 
     def _remove_chars_in_filename(self):
-        for chars in self.unwanted_chars:
+        for chars in self.unwanted_chars_in_filename:
             self.filename = self.filename.replace(chars, '')
 
     def start_processing(self):
+        # Check if filename satisfies one of the template
+        for template in self.filename_templates:
+            pass
         # Check if file hash is in db
         bookfile = self._get_bookfile_from_db(dict(md5=self.md5))
         if bookfile:

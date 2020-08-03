@@ -27,7 +27,7 @@ setup(name='EbookManager',
         'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Libraries'
       ],
-      keywords='python ebook manager',
+      keywords='ebook manager',
       url='https://github.com/raul23/EbookManager',
       author='Raul C.',
       author_email='rchfe23@gmail.com',

@@ -14,3 +14,7 @@ README
    :alt: Build Status
 
 **EbookManager** is a ...
+
+`:warning:`
+
+   Warning text is written here.

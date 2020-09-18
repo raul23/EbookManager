@@ -265,6 +265,7 @@ def _split_fname(fname):
     ext = ext[1:]
     return root, ext
 
+
 def _undo_fix_extensions(metadata):
     """TODO
 

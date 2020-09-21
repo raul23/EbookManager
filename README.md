@@ -1,1 +1,1 @@
-# EbookManager
+# django-ebook-manager

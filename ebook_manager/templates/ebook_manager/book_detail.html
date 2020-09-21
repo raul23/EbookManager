@@ -24,7 +24,7 @@
 {% endfor %}
 </ul>
 
-<form action="{% url 'ebooks:rate' book.book_id %}" method="post">
+<form action="{% url 'ebook_manager:rate' book.book_id %}" method="post">
     {% csrf_token %}
     <input type="number" name="rating" id="id_rating" min="1" max="5">
     <label for="id_rating">Rating (Personal)</label><br>

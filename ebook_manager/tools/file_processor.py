@@ -3,7 +3,7 @@ import re
 
 import pyisbn
 
-from ebooks.models import BookFile
+from ebook_manager.models import BookFile
 
 
 class FileProcessor:

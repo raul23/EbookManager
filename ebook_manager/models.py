@@ -65,12 +65,12 @@ class UniqueErrorMessage(models.Model):
 
 
 class AbstractBook(models.Model):
+    class Meta:
+        abstract = True
+
     # TODO: check if better way than repeat type
     allowed_book_id_types = ('ASIN', 'ISBN')
     choices_book_id_types = [(t, t) for t in allowed_book_id_types]
-
-    class Meta:
-        abstract = True
 
     book_id = models.CharField('Book Identifier (e.g. ISBN-10 or ASIN)',
                                primary_key=True,
@@ -166,7 +166,6 @@ class AbstractBook(models.Model):
 
 
 class Book(AbstractBook):
-
     class BookFormat(models.TextChoices):
         Hardcover = 'H'
         Kindle = 'K'
@@ -184,15 +183,16 @@ class Book(AbstractBook):
 
 
 class BookFile(AbstractBook, UniqueErrorMessage):
-    # TODO: extensions already found in scripts/tools.py
-    allowed_extensions = ('azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub',
-                          'gz', 'mobi', 'pdf', 'rar', 'zip',)
-
     class Meta:
         # TODO: remove this and use unique on md5 and sha256 only
         # TODO: test combinations
         unique_together = (("md5", "file_path"),)
 
+    # TODO: extensions already found in scripts/tools.py
+    allowed_extensions = ('azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub',
+                          'gz', 'mobi', 'pdf', 'rar', 'zip',)
+
+    # Fields
     # Automatic primary key
     book_id = models.CharField('Book Identifier (e.g. ISBN-10 or ASIN)', max_length=20)
     # book is required field
@@ -240,9 +240,6 @@ class Author(models.Model):
 
 
 class Authorship(UniqueErrorMessage):
-    author = models.ForeignKey(Author, on_delete=models.CASCADE)
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
-
     class Meta:
         # TODO: doesn't do anything
         # TODO: it is recommended to use UniqueConstraint. In the docs there is
@@ -250,6 +247,9 @@ class Authorship(UniqueErrorMessage):
         # Ref.: https://stackoverflow.com/a/49817401
         unique_together = (("author", "book"),)
         verbose_name_plural = "Authorship"
+
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
 
     def clean(self):
         # TODO: do something
@@ -275,16 +275,15 @@ def verify_uniqueness(sender, **kwargs):
 
 
 class Category(UniqueErrorMessage):
+    class Meta:
+        unique_together = (("category", "source"),)
+        verbose_name_plural = "categories"
 
     class SourceOfCategory(models.TextChoices):
         AMAZON = 'A'
         GOODREADS = 'G'
         PERSONAL = 'P'
         WIKIPEDIA = 'W'
-
-    class Meta:
-        unique_together = (("category", "source"),)
-        verbose_name_plural = "categories"
 
     # TODO: check that category is unique
     category = models.CharField(max_length=200)
@@ -301,14 +300,13 @@ class Category(UniqueErrorMessage):
 
 
 class Rating(UniqueErrorMessage):
+    class Meta:
+        unique_together = (("book", "source"),)
 
     class SourceOfRating(models.TextChoices):
         AMAZON = 'A'
         GOODREADS = 'G'
         PERSONAL = 'P'
-
-    class Meta:
-        unique_together = (("book", "source"),)
 
     # TODO: primary key is (book_id, source)?
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
@@ -338,14 +336,13 @@ class Rating(UniqueErrorMessage):
 
 
 class Tag(UniqueErrorMessage):
+    class Meta:
+        unique_together = (("tag", "source"),)
 
     class SourceOfTag(models.TextChoices):
         AMAZON = 'A'
         GOODREADS = 'G'
         PERSONAL = 'P'
-
-    class Meta:
-        unique_together = (("tag", "source"),)
 
     # TODO: check tag is unique
     tag = models.CharField(max_length=200)

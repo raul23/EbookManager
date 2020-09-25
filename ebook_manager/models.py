@@ -177,6 +177,8 @@ class Book(AbstractBook):
                                    default="",
                                    blank=True,
                                    choices=BookFormat.choices)
+    categories = models.ManyToManyField('Category', blank=True)
+    tags = models.ManyToManyField('Tag', blank=True)
 
     def __str__(self):
         return "{} [{}]".format(self.title, self.book_id)
@@ -186,7 +188,7 @@ class BookFile(AbstractBook, UniqueErrorMessage):
     class Meta:
         # TODO: remove this and use unique on md5 and sha256 only
         # TODO: test combinations
-        unique_together = (("md5", "file_path"),)
+        unique_together = (("md5", "filepath"),)
 
     # TODO: extensions already found in scripts/tools.py
     allowed_extensions = ('azw', 'azw3', 'cbz', 'chm', 'djvu', 'docx', 'epub',
@@ -198,9 +200,9 @@ class BookFile(AbstractBook, UniqueErrorMessage):
     # book is required field
     # TODO: test on_delete
     books = models.ManyToManyField(Book, blank=True)
-    # TODO: Should file_path be CharField with max_length (but what)?
-    # file_path is required field
-    file_path = models.TextField(validators=[validate_ebook_file])
+    # TODO: Should filepath be CharField with max_length (but what)?
+    # filepath is required field
+    filepath = models.TextField('File path', validators=[validate_ebook_file])
     # Size is given in multiples of bytes, and the unit symbol is shown beside
     # the file size, e.g. 660 KB
     size = models.CharField('File size',
@@ -221,7 +223,7 @@ class BookFile(AbstractBook, UniqueErrorMessage):
     def __str__(self):
         return "{} [{}]: {}".format(self.title,
                                     self.book_id,
-                                    self.file_path)
+                                    self.filepath)
 
 
 class Author(models.Model):
@@ -259,6 +261,7 @@ class Authorship(UniqueErrorMessage):
         return ' '
 
 
+# TODO: where is it used?
 @receiver(m2m_changed, sender=Author.books.through)
 def verify_uniqueness(sender, **kwargs):
     author = kwargs.get('instance', None)
@@ -290,7 +293,7 @@ class Category(UniqueErrorMessage):
     source = models.CharField('Source of category',
                               max_length=200,
                               choices=SourceOfCategory.choices)
-    books = models.ManyToManyField(Book, blank=True)
+    # books = models.ManyToManyField(Book, blank=True)
     # Automatic fields
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
@@ -318,8 +321,7 @@ class Rating(UniqueErrorMessage):
     # 1 <= avg_rating <= 5
     avg_rating = models.FloatField(
         'Average rating',
-        validators=[MinValueValidator(1),
-                    MaxValueValidator(5)])
+        validators=[MinValueValidator(1), MaxValueValidator(5)])
     # nb_ratings >= 1
     nb_ratings = models.PositiveIntegerField('Number of ratings',
                                              validators=[MinValueValidator(1)])
@@ -350,7 +352,7 @@ class Tag(UniqueErrorMessage):
     source = models.CharField('Source of tag',
                               max_length=200,
                               choices=SourceOfTag.choices)
-    books = models.ManyToManyField(Book, blank=True)
+    # books = models.ManyToManyField(Book, blank=True)
     # Automatic fields
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)

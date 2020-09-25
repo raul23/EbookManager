@@ -4,120 +4,100 @@ import os
 import django
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.utils import IntegrityError
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.mysite.settings")
 django.setup()
 
-from ebooks.models import Author, Book, BookFile, Category, Rating, Tag
+from ebook_manager import data
+from ebook_manager.models import Author, Book, BookFile, Category, Rating, Tag
 
-
-def generate_iso_639_lang():
-    from languages import languages
-    # Get list of ISO 639 languages and sort them by language name
-    # (they are already sorted by language codes)
-    iso_639_lang = list(languages.LANGUAGES)
-    print("Sorting ...")
-    iso_639_lang.sort(key=lambda tup: tup[1])
-
-    # Save languages as a tuple of tuples to a .py file
-    print("Writing ...")
-    with open('iso_639_languages.py', 'w') as f:
-        f.write("# -*- coding: utf-8 -*-\n\n\n")
-        f.write("# Sorted by language name, taken from languages module\n")
-        f.write("# Ref.: https://pypi.org/project/django-language-fields\n")
-        f.write("LANGUAGES = (\n")
-        for tup in iso_639_lang:
-            line = '    ("{}", "{}"),\n'.format(tup[0], tup[1])
-            f.write(line)
-        f.write(")\n")
-    print("Done!")
-
-
-def load_iso_639_lang():
-    # Load data
-    from iso_639_languages import ISO_639_LANGUAGES
-    print("There are {} language codes".format(len(ISO_639_LANGUAGES)))
-
-
-def populate_db():
-
-    def save_data_with_mtom_rel(tb_data, class_):
-        for obj_data in tb_data:
-            try:
-                books = obj_data['books']
-                del obj_data['books']
-                tb_obj = class_(**obj_data)
-                tb_obj.full_clean()
-            except KeyError as e:
-                print(e)
-                continue
-            except ValidationError as e:
-                for msg in e.message_dict['__all__']:
-                    print(msg)
-                continue
-            else:
-                tb_obj.save()
-            # tb_obj = class_.objects.create(**obj_data)
-            for b_id in books:
-                try:
-                    book = Book.objects.get(book_id=b_id)
-                    tb_obj.books.add(book)
-                except (Book.DoesNotExist, IntegrityError) as e:
-                    print(e)
-
-    def save_data_with_foreign_rel(tb_data, class_):
-        for obj_data in tb_data:
-            try:
-                b_id = obj_data['book']
-                book = Book.objects.get(book_id=b_id)
-                obj_data['book'] = book
-                tb_obj = class_(**obj_data)
-                tb_obj.full_clean()
-                # class_.objects.create(**obj_data)
-            except (KeyError, Book.DoesNotExist) as e:
-                print(e)
-            except ValidationError as e:
-                for msg in e.message_dict['__all__']:
-                    print(msg)
-            else:
-                tb_obj.save()
-
-    filepath = os.path.join(os.getcwd(), 'ebooks', 'data', 'test_data.json')
-    with open(filepath) as f:
-        data = json.load(f)
-
-    # Save books
-    for book_data in data['Books']:
-        try:
-            book = Book.objects.get(book_id=book_data['book_id'])
-        except KeyError as e:
-            print(e)
-        except ObjectDoesNotExist:
-            book = Book(**book_data)
-            book.full_clean()
-            book.save()
-            # Book.objects.create(**book_data)
-        else:
-            print("Book '{}' already exists".format(str(book)))
-
-    save_data_with_mtom_rel(data['Authors'], Author)
-    save_data_with_mtom_rel(data['BookFiles'], BookFile)
-    save_data_with_mtom_rel(data['Categories'], Category)
-    save_data_with_mtom_rel(data['Tags'], Tag)
-    save_data_with_foreign_rel(data['Ratings'], Rating)
+DATA_DIRPATH = data.__path__[0]
+TEST_DATA_FILEPATH = "test_data.json"
 
 
 def clear_tb():
-    Book.objects.all().delete()
     Author.objects.all().delete()
+    Book.objects.all().delete()
     BookFile.objects.all().delete()
     Category.objects.all().delete()
     Rating.objects.all().delete()
     Tag.objects.all().delete()
 
 
+def populate_db():
+
+    def save_data_in_db(tb_data, class_):
+        for obj_data in tb_data:
+            try:
+                books = obj_data.get('books', [])
+                if books:
+                    del obj_data['books']
+                filepath = obj_data.get('filepath')
+                if filepath:
+                    obj_data['filepath'] = os.path.expanduser(filepath)
+                tb_obj = class_(**obj_data)
+                tb_obj.full_clean()
+            except KeyError as e:
+                print(e)
+            except ValidationError as e:
+                for msg in e.message_dict['__all__']:
+                    print(msg)
+            else:
+                tb_obj.save()
+                for b_id in books:
+                    try:
+                        book = Book.objects.get(book_id=b_id)
+                        tb_obj.books.add(book)
+                    except (Book.DoesNotExist, IntegrityError) as e:
+                        print(e)
+
+    filepath = os.path.join(DATA_DIRPATH, TEST_DATA_FILEPATH)
+    with open(filepath) as f:
+        data = json.load(f)
+
+    save_data_in_db(data['Categories'], Category)
+    save_data_in_db(data['Tags'], Tag)
+
+    # Save books
+    for book_data in data['Books']:
+        book_already_exists = False
+        try:
+            book = Book.objects.get(book_id=book_data['book_id'])
+        except KeyError as e:
+            print(e)
+        except ObjectDoesNotExist:
+            book_already_exists = True
+        else:
+            print("Book '{}' already exists".format(str(book)))
+        if book_already_exists:
+            try:
+                categories = book_data['categories']
+                del book_data['categories']
+                tags = book_data['tags']
+                del book_data['tags']
+                book = Book(**book_data)
+                book.full_clean()
+            except KeyError as e:
+                print(e)
+            except ValidationError as e:
+                for msg in e.message_dict['__all__']:
+                    print(msg)
+            else:
+                book.save()
+                all_objects = [(Category, 'category', categories), (Tag, 'tag', tags)]
+                for (class_, objects) in all_objects:
+                    for obj_name in objects:
+                        try:
+                            obj = class_.objects.get(category=obj_name)
+                            book.books.add(book)
+                        except (Book.DoesNotExist, IntegrityError) as e:
+                            print(e)
+
+    save_data_in_db(data['Authors'], Author)
+    save_data_in_db(data['BookFiles'], BookFile)
+    save_data_in_db(data['Ratings'], Rating)
+
+
 if __name__ == '__main__':
     # TODO: add command-line arguments
-    # generate_iso_639_lang()
-    # load_iso_639_lang()
     populate_db()
     # clear_tb()

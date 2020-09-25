@@ -73,7 +73,7 @@ class BookFileAdmin(admin.ModelAdmin):
     exclude = ('book_format',)
     fields = get_fields_to_display(
         model=BookFile,
-        beginning=['book_id', 'book_id_type', 'title', 'file_path', 'books'],
+        beginning=['book_id', 'book_id_type', 'title', 'filepath', 'books'],
         readonly=readonly_fields,
         exclude=exclude)
 

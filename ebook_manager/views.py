@@ -5,7 +5,7 @@ from django.views import generic
 
 from .apps import EbookManagerConfig
 from .models import Book, Rating
-from .tools.file_processor import FileProcessor
+from .utils.file_processor import FileProcessor
 
 
 class IndexView(generic.ListView):

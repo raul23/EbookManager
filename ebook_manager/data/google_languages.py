@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 # List of languages from https://translate.google.com
 LANGUAGES = [
     'Afrikaans',

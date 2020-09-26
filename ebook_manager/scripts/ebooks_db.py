@@ -28,6 +28,10 @@ def populate_db():
     def save_data_in_db(tb_data, class_):
         for obj_data in tb_data:
             try:
+                b_id = obj_data.get('book')
+                if b_id:
+                    book = Book.objects.get(book_id=b_id)
+                    obj_data['book'] = book
                 books = obj_data.get('books', [])
                 if books:
                     del obj_data['books']
@@ -83,12 +87,12 @@ def populate_db():
                     print(msg)
             else:
                 book.save()
-                all_objects = [(Category, 'category', categories), (Tag, 'tag', tags)]
-                for (class_, objects) in all_objects:
-                    for obj_name in objects:
+                all_object_names = [(Category, 'category', 'categories', categories), (Tag, 'tag', 'tags', tags)]
+                for (class_, field_name, mtom_field_name, obj_names) in all_object_names:
+                    for obj_name in obj_names:
                         try:
-                            obj = class_.objects.get(category=obj_name)
-                            book.books.add(book)
+                            tab_obj = class_.objects.get(**{field_name: obj_name})
+                            getattr(book, mtom_field_name).add(tab_obj)
                         except (Book.DoesNotExist, IntegrityError) as e:
                             print(e)
 

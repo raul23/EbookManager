@@ -57,6 +57,7 @@ class AuthorshipInline(admin.TabularInline):
 class AuthorAdmin(admin.ModelAdmin):
     # exclude = ('books',)
     inlines = [AuthorshipInline]
+    ordering = ('name',)
 
 
 class BookAdmin(admin.ModelAdmin):
@@ -66,6 +67,7 @@ class BookAdmin(admin.ModelAdmin):
         ending=['book_format', 'thumbnail_cover_image', 'enlarged_cover_image'],
         exclude=exclude)
     inlines = [AuthorshipInline]
+    ordering = ('title',)
 
 
 class BookFileAdmin(admin.ModelAdmin):
@@ -76,12 +78,25 @@ class BookFileAdmin(admin.ModelAdmin):
         beginning=['book_id', 'book_id_type', 'title', 'filepath', 'books'],
         readonly=readonly_fields,
         exclude=exclude)
+    ordering = ('title',)
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    ordering = ('category',)
+
+
+class RatingAdmin(admin.ModelAdmin):
+    ordering = ('book__title',)
+
+
+class TagAdmin(admin.ModelAdmin):
+    ordering = ('tag',)
 
 
 # TODO: add fieldsets, see Part 7 of django tutorial
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(Book, BookAdmin)
 admin.site.register(BookFile, BookFileAdmin)
-admin.site.register(Category)
-admin.site.register(Rating)
-admin.site.register(Tag)
+admin.site.register(Category, CategoryAdmin)
+admin.site.register(Rating, RatingAdmin)
+admin.site.register(Tag, TagAdmin)

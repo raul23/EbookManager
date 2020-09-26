@@ -14,6 +14,7 @@
 </head>
 <body>
 
+<!--
 <form action="{% url 'ebook-manager:upload_files' %}" method="post" enctype="multipart/form-data">
   {% csrf_token %}
   <div class="form-group">
@@ -22,41 +23,39 @@
     <input type="submit" value="Upload">
   </div>
 </form>
+-->
 
-{% if latest_book_list %}
-    <ul>
-    {% for book in latest_book_list %}
-        <li><a href="{% url 'ebook-manager:book_detail' book.book_id %}">{{ book.title }}</a></li>
-    {% endfor %}
+<h1 style="text-align:center">Ebooks</h1>
+
+<div class="bd-example">
+    <ul class="list-unstyled">
+    {% for book in book_list %}
+        <li class="media my-4">
+            <svg class="bd-placeholder-img mr-3" width="64" height="64" xmlns="http://www.w3.org/2000/svg"
+                 preserveAspectRatio="xMidYMid slice" focusable="false" role="img"
+                 aria-label="Placeholder: 64x64"><title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect>
+                <text x="50%" y="50%" fill="#dee2e6" dy=".3em">64x64</text></svg>
+            <div class="media-body">
+                <h4 class="mt-0 mb-1"><a href="{% url 'ebook-manager:book_detail' book.book_id %}">{{ book.title }}</a></h4>
+                <h5>{{ book.pub_year }}</h5>
+                <div>By
+                    {% for author in book.authors.all %}
+                        <a href="{% url 'ebook-manager:author-detail' author.name|slugify %}">{{ author.name }}</a>
+                        {% if not forloop.last %}
+                            ,
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div>4/5, 200 ratings </div>
+                <p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio,
+                    vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec
+                    lacinia congue felis in faucibus.</p>
+            </div>
+        </li>
     </ul>
-{% else %}
-    <p>No books are available.</p>
-{% endif %}
-
-    <div class="bd-example">
-<ul class="list-unstyled">
-  <li class="media">
-    <svg class="bd-placeholder-img mr-3" width="64" height="64" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 64x64"><title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="50%" y="50%" fill="#dee2e6" dy=".3em">64x64</text></svg>
-    <div class="media-body">
-      <h5 class="mt-0 mb-1">List-based media object</h5>
-      Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
-    </div>
-  </li>
-  <li class="media my-4">
-    <svg class="bd-placeholder-img mr-3" width="64" height="64" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 64x64"><title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="50%" y="50%" fill="#dee2e6" dy=".3em">64x64</text></svg>
-    <div class="media-body">
-      <h5 class="mt-0 mb-1">List-based media object</h5>
-      Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
-    </div>
-  </li>
-  <li class="media">
-    <svg class="bd-placeholder-img mr-3" width="64" height="64" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 64x64"><title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="50%" y="50%" fill="#dee2e6" dy=".3em">64x64</text></svg>
-    <div class="media-body">
-      <h5 class="mt-0 mb-1">List-based media object</h5>
-      Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
-    </div>
-  </li>
-</ul>
+    {% empty %}
+        <p>No books are available.</p>
+    {% endfor %}
 </div>
 
     <!-- Optional JavaScript -->

@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.utils import IntegrityError
 from django.dispatch import receiver
+from django.template.defaultfilters import slugify
 
 import pyisbn
 
@@ -236,6 +237,13 @@ class Author(models.Model):
     name = models.CharField(max_length=200)
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
+    slug_name = models.SlugField(max_length=200, null=True, blank=True)
+
+    # Ref.: https://www.fullstackpython.com/django-db-models-slugfield-examples.html
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.slug_name = slugify(self.name)
+        super(Author, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name

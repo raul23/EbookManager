@@ -5,14 +5,26 @@
     <title>Book ratings</title>
 </head>
 <body>
+<a href="{% url 'ebook-manager:index' %}">Home</a>
 
-<h1>{{ book.title }}</h1>
+<h1 style="text-align:center">{{ book.title }} ({{ book.pub_year }})</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<h2>Ratings</h2>
 <ul>
 {% for rating in book.rating_set.all %}
-<li>{{ rating.get_source_display }} ---- {{  rating.avg_rating|floatformat:-1 }}/5 ---- {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}</li>
+    <li><b>{{ rating.get_source_display }}:</b> {{  rating.avg_rating|floatformat:-1 }}/5 with {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}</li>
 {% endfor %}
 </ul>
-
-<a href="{% url 'ebook-manager:book_detail' book.book_id %}">Rate again?</a>
+<div style="padding-left:40px;">
+<form action="{% url 'ebook-manager:rate' book.book_id %}" method="post">
+    {% csrf_token %}
+    <label for="id_rating"><b>Personal rating:</b></label><br>
+    <input type="number" name="rating" id="id_rating" min="1" max="5">
+    <br>
+    <input type="submit" value="Rate">
+</form>
+</div>
 </body>
 </html>

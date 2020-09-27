@@ -27,8 +27,8 @@ class IndexView(generic.ListView):
 class AuthorDetailView(generic.DetailView):
     model = Author
     template_name = "{}/author_detail.html".format(app_name)
-    slug_field = "name"
-    # slug_url_kwarg = 'author_name'
+    slug_field = "slug_name"
+    slug_url_kwarg = 'slug_name'
 
 
 class BookDetailView(generic.DetailView):
@@ -53,7 +53,7 @@ def rate(request, book_id):
     except (KeyError, ValueError):
         # ValueError if no rating ('', empty string)
         # Redisplay the book rating form
-        return render(request, '{}/book_detail.html'.format(app_name), {
+        return render(request, '{}/book_ratings.html'.format(app_name), {
             'book': book,
             'error_message': "You didn't rate the book.",
         })

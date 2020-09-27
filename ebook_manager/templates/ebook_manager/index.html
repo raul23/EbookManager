@@ -14,17 +14,6 @@
 </head>
 <body>
 
-<!--
-<form action="{% url 'ebook-manager:upload_files' %}" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <div class="form-group">
-    <label for="UploadFiles">Add ebooks:</label>
-    <input type="file" name="files" class="form-control-file" id="UploadFiles" multiple>
-    <input type="submit" value="Upload">
-  </div>
-</form>
--->
-
 <h1 style="text-align:center">Ebooks</h1>
 
 <div class="bd-example">
@@ -40,16 +29,28 @@
                 <h5>{{ book.pub_year }}</h5>
                 <div>By
                     {% for author in book.authors.all %}
-                        <a href="{% url 'ebook-manager:author-detail' author.name|slugify %}">{{ author.name }}</a>
+                        <a href="{% url 'ebook-manager:author_detail' author.slug_name %}">{{ author.name }}</a>
                         {% if not forloop.last %}
                             ,
                         {% endif %}
                     {% endfor %}
                 </div>
-                <div>4/5, 200 ratings </div>
+                <div>
+                    {% for rating in book.rating_set.all %}
+                        <b>{{ rating.get_source_display }}:</b>
+                        {% if rating.get_source_display == 'Personal' %}
+                            <a href="{% url 'ebook-manager:book_ratings' book.book_id %}">{{ rating.avg_rating|floatformat:-1 }}/5</a>
+                        {% else %}
+                            {{ rating.avg_rating|floatformat:-1 }}/5
+                        {% endif %}
+                        with {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}
+                        {% if not forloop.last %} , {% endif %}
+                    {% endfor %}
+                </div>
                 <p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio,
                     vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec
-                    lacinia congue felis in faucibus.</p>
+                    lacinia congue felis in faucibus.
+                </p>
             </div>
         </li>
     </ul>

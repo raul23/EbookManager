@@ -2,22 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Author detail</title>
+    <title>Author: {{ author.name }}</title>
 </head>
 <body>
-<h1>{{ author.name }}</h1>
+<a href="{% url 'ebook-manager:index' %}">Home</a>
 
-<!--
+<h1 style="text-align:center">{{ author.name }}</h1>
+
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
--->
 
 <h2>Books</h2>
-<!--
 <ul>
-    {% for book in author.book_set.all %}
-        <li>{{ book.title }}</li>
+    {% for book in author.books.all %}
+        <li><a href="{% url 'ebook-manager:book_detail' book.book_id %}">{{ book.title }} ({{ book.pub_year }})</a></li>
     {% endfor %}
 </ul>
--->
 </body>
 </html>

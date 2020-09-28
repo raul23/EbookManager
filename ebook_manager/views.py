@@ -45,11 +45,15 @@ class BookRatingsView(generic.DetailView):
     template_name = '{}/book_ratings.html'.format(app_name)
 
 
+class UploadEbooksView(generic.TemplateView):
+    template_name = '{}/upload_ebooks.html'.format(app_name)
+
+
 def rate(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
     try:
         user_rating = float(request.POST['rating'])
-        rating_obj = book.rating_set.get(source='P')
+        rating_obj = book.rating_set.get(source='U')
     except (KeyError, ValueError):
         # ValueError if no rating ('', empty string)
         # Redisplay the book rating form
@@ -59,14 +63,16 @@ def rate(request, book_id):
         })
     except Rating.DoesNotExist:
         Rating.objects.create(book=book,
-                              source='P',
-                              avg_rating=user_rating,
-                              nb_ratings=1)
+                              source='U',
+                              user_rating=user_rating)
     else:
+        """
         total_ratings = rating_obj.avg_rating * rating_obj.nb_ratings
         new_avg_rating = (total_ratings + user_rating) / (rating_obj.nb_ratings + 1)
         rating_obj.avg_rating = new_avg_rating
         rating_obj.nb_ratings += 1
+        """
+        rating_obj.user_rating = user_rating
         rating_obj.save()
     # Always return an HttpResponseRedirect after successfully dealing
     # with POST data. This prevents data from being posted twice if a
@@ -75,7 +81,7 @@ def rate(request, book_id):
         reverse('{}:book_ratings'.format(app_name), args=(book.book_id,)))
 
 
-def upload_files(request):
+def upload_ebooks(request):
     import ipdb
     ipdb.set_trace()
     tmp_files = request.FILES.getlist('files')

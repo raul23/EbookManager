@@ -1,54 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Book detail</title>
-</head>
-<body>
-<a href="{% url 'ebook-manager:index' %}">Home</a>
+{% extends "ebook_manager/base_others.html" %}
 
-<h1 style="text-align:center">{{ book.title }} ({{ book.pub_year }})</h1>
+{% block title %}Book: {{ book.title }} {% endblock %}
 
-{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+{% block heading-1 %} {{ book.title }} ({{ book.pub_year }}){% endblock %}
 
-<h2>Authors</h2>
-<ul>
-{% for author in book.authors.all %}
-    <li><a href="{% url 'ebook-manager:author_detail' author.slug_name %}">{{ author.name }}</a></li>
-{% endfor %}
-</ul>
+{% block content-others %}
+    {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-<h2>Ratings</h2>
-<ul>
-    {% for rating in book.rating_set.all %}
-        <li><b>{{ rating.get_source_display }}:</b>
-            {% if rating.get_source_display == 'Personal' %}
-                <a href="{% url 'ebook-manager:book_ratings' book.book_id %}">{{ rating.avg_rating|floatformat:-1 }}/5</a>
-            {% else %}
-                {{ rating.avg_rating|floatformat:-1 }}/5
-            {% endif %}
-            with {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}
-        </li>
-    {% empty %}
-        <p>No ratings are available.</p>
+    <h2>Authors</h2>
+    <ul>
+    {% for author in book.authors.all %}
+        <li><a href="{% url 'ebook-manager:author_detail' author.slug_name %}">{{ author.name }}</a></li>
     {% endfor %}
-</ul>
-<div style="padding-left:40px;">
-<a href="{% url 'ebook-manager:book_ratings' book.book_id %}">Rate</a>
-</div>
+    </ul>
 
-<h2>Plot summary</h2>
-<p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at,
-    tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</p>
-<!--
-<form action="{% url 'ebook-manager:upload_files' %}" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <div class="form-group">
-    <label for="UploadFiles">Add ebooks:</label>
-    <input type="file" name="files" class="form-control-file" id="UploadFiles" multiple>
-    <input type="submit" value="Upload">
-  </div>
-</form>
--->
-</body>
-</html>
+    <h2>Ratings</h2>
+    <ul>
+        {% for rating in book.rating_set.all %}
+            <li><b>{{ rating.get_source_display }}:</b>
+                {% if rating.get_source_display == 'User' %}
+                    <a href="{% url 'ebook-manager:book_ratings' book.book_id %}">{{ rating.user_rating|floatformat:-1 }}/5</a>
+                {% else %}
+                    {{ rating.avg_rating|floatformat:-1 }}/5  with {{ rating.nb_ratings }} rating{{ rating.nb_ratings|pluralize }}
+                {% endif %}
+            </li>
+        {% empty %}
+            <p>No ratings are available.</p>
+        {% endfor %}
+    </ul>
+
+    {% comment %}
+    <div style="margin-left:40px;">
+    <a href="{% url 'ebook-manager:book_ratings' book.book_id %}">Rate</a>
+    </div>
+    {% endcomment %}
+
+    <h2>Plot summary</h2>
+    <div style="margin-bottom:130px;">{% lorem 2 p %}</div>
+{% endblock %}

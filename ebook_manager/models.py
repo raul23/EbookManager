@@ -293,7 +293,7 @@ class Category(UniqueErrorMessage):
     class SourceOfCategory(models.TextChoices):
         AMAZON = 'A'
         GOODREADS = 'G'
-        PERSONAL = 'P'
+        USER = 'U'
         WIKIPEDIA = 'W'
 
     # TODO: check that category is unique
@@ -317,7 +317,7 @@ class Rating(UniqueErrorMessage):
     class SourceOfRating(models.TextChoices):
         AMAZON = 'A'
         GOODREADS = 'G'
-        PERSONAL = 'P'
+        USER = 'U'
 
     # TODO: primary key is (book_id, source)?
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
@@ -329,13 +329,30 @@ class Rating(UniqueErrorMessage):
     # 1 <= avg_rating <= 5
     avg_rating = models.FloatField(
         'Average rating',
+        null=True,
+        blank=True,
         validators=[MinValueValidator(1), MaxValueValidator(5)])
     # nb_ratings >= 1
     nb_ratings = models.PositiveIntegerField('Number of ratings',
+                                             null=True,
+                                             blank=True,
                                              validators=[MinValueValidator(1)])
+    user_rating = models.FloatField(
+        'User rating',
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)])
     # Automatic fields
     add_date = models.DateTimeField('Date added', auto_now_add=True)
     update_date = models.DateTimeField('Date updated', auto_now=True)
+
+    # TODO: validate ratings, e.g. if user rating, other fields (avg_rating
+    # and nb_ratings) should be blanked
+    def clean(self):
+        if self.source == 'User':
+            pass
+        else:
+            pass
 
     def __str__(self):
         return "{} [{}]: {}/5, {} ratings [{}]".format(self.book.title,
@@ -352,7 +369,7 @@ class Tag(UniqueErrorMessage):
     class SourceOfTag(models.TextChoices):
         AMAZON = 'A'
         GOODREADS = 'G'
-        PERSONAL = 'P'
+        USER = 'U'
 
     # TODO: check tag is unique
     tag = models.CharField(max_length=200)
@@ -367,3 +384,16 @@ class Tag(UniqueErrorMessage):
 
     def __str__(self):
         return "{} [{}]".format(self.tag, self.get_source_display())
+
+
+"""
+<form action="{% url 'ebook-manager:upload_files' %}" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="UploadFiles">Add ebooks:</label>
+    <input type="file" name="files" class="form-control-file" id="UploadFiles" multiple>
+    <input type="submit" value="Upload">
+  </div>
+</form>
+
+"""

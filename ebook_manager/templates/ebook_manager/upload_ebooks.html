@@ -1,25 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Upload an ebook file</title>
-</head>
-<body>
-<div style="margin-left:20px;margin-top:10px">
-    <a href="{% url 'ebook-manager:index' %}">Home</a>
-    <a style="padding-left:10px" href="{% url 'ebook-manager:index' %}">Upload files</a>
-</div>
-<h1 style="text-align:center">Upload an ebook file</h1>
+{% extends "ebook_manager/base_others.html" %}
 
-<form action="{% url 'ebook-manager:upload_files_submit_form' %}" method="post" enctype="multipart/form-data">
+{% block title %}Book: {{ book.title }} {% endblock %}
+
+{% block heading-1 %} Upload an ebook file {% endblock %}
+
+{% block content-others %}
+<form action="{% url 'ebook-manager:upload_submit_form' %}" method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  <div class="form-group">
-      <label for="UploadFiles">Add ebooks:</label>
-      <input type="file" name="files" class="form-control-file" id="UploadFiles" multiple>
+  <div style="text-align: center" class="form-group">
+      <label for="UploadFiles"></label>
+      <input style="text-align: center" type="file" name="files" class="form-control-file" id="UploadFiles" multiple>
       <br/>
       <input type="submit" value="Upload">
   </div>
 </form>
-
-</body>
-</html>
+{% endblock %}

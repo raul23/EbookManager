@@ -26,11 +26,11 @@ def get_fields_to_display(model, beginning=None, ending=None, readonly=None,
     readonly = init_var(readonly)
     exclude = init_var(exclude)
     fields_to_keep = []
-    ignore_fields = []
-    ignore_fields.extend(beginning)
-    ignore_fields.extend(ending)
-    ignore_fields.extend(readonly)
-    ignore_fields.extend(exclude)
+    fields_to_skip = []
+    fields_to_skip.extend(beginning)
+    fields_to_skip.extend(ending)
+    fields_to_skip.extend(readonly)
+    fields_to_skip.extend(exclude)
     if beginning:
         fields_to_keep.extend(beginning)
     for field_obj in all_fields:
@@ -39,7 +39,7 @@ def get_fields_to_display(model, beginning=None, ending=None, readonly=None,
         if hasattr(field_obj, 'editable') and not field_obj.editable:
             continue
         field_name = str(field_obj).split('.')[-1]
-        if field_name not in ignore_fields:
+        if field_name not in fields_to_skip:
             fields_to_keep.append(field_name)
     # Readonly fields are added at the end of the list of fields to display
     if readonly:

@@ -103,5 +103,7 @@ def populate_db():
 
 if __name__ == '__main__':
     # TODO: add command-line arguments
+    import ipdb
+    ipdb.set_trace()
     populate_db()
     # clear_tb()

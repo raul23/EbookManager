@@ -11,5 +11,6 @@ class EbookManagerConfig(AppConfig):
     # TODO: remove package import
     file_processor_cfg = {
         'unwanted_chars_in_filename': LIST_CHARS,
-        'filename_templates': ["AUTHOR - TITLE (YEAR)",
-                               "TITLE BY AUTHOR (YEAR)"]}
+        'filename_templates': [
+            "(?P<AUTHORS>.+) - (?P<TITLE>.+) (?P<YEAR>\\(.+\\))",
+            "(?P<TITLE>.+) [BY|by] (?P<AUTHORS>.+) (?P<YEAR>\\(.+\\))"]}

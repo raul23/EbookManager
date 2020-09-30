@@ -28,6 +28,7 @@ class FileProcessor:
         self.filename_templates = filename_templates
         self.enable_txt_conversion = enable_txt_conversion
         self.enable_ocr = enable_ocr
+        self.book_info = {'authors': None, 'title': None, 'year': None}
 
     def _get_book_id(self):
         pass
@@ -90,14 +91,38 @@ class FileProcessor:
     def _remove_chars_in_filename(self):
         ipdb.set_trace()
         for regex in self.unwanted_chars_in_filename:
-            pass
+            self.filename = re.sub(regex, "", self.filename, 0).strip()
 
     def start_processing(self):
         # Preprocess the filename
         self._remove_chars_in_filename()
-        # Check if filename satisfies one of the template
-        for template in self.filename_templates:
-            pass
+        # Check if filename satisfies one of the templates
+        warning_msg = "WARNING: The filename " + self.filename + \
+                      " matched the template '{}' but no {} could be found"
+        for regex_template in self.filename_templates:
+            match = re.match(regex_template, self.filename)
+            if match:
+                groupdict = match.groupdict()
+                authors = groupdict.get('AUTHORS')
+                if authors:
+                    self.book_info['authors'] = authors
+                else:
+                    print(warning_msg.format(regex_template, "author"))
+                title = groupdict.get('TITLE')
+                if title:
+                    self.book_info['title'] = authors
+                else:
+                    print(warning_msg.format(regex_template, "title"))
+                year = groupdict.get('YEAR')
+                if year:
+                    year = re.search("\d{4}", year).group()
+                    if year:
+                        self.book_info['year'] = year
+                    else:
+                        print(warning_msg.format(regex_template, "year"))
+                else:
+                    print(warning_msg.format(regex_template, "year"))
+                break
         # Check if file hash is in db
         bookfile = self._get_bookfile_from_db(dict(md5=self.md5))
         if bookfile:

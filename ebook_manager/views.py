@@ -21,7 +21,7 @@ class IndexView(generic.ListView):
     def get_queryset(self):
         # """Return the last three added books."""
         # return Book.objects.order_by('-add_date')[:3]
-        return Book.objects.all()
+        return Book.objects.order_by('title')
 
 
 class AuthorDetailView(generic.DetailView):
@@ -82,8 +82,6 @@ def rate(request, book_id):
 
 
 def upload_ebooks(request):
-    import ipdb
-    ipdb.set_trace()
     tmp_files = request.FILES.getlist('files')
     for tmpf in tmp_files:
         # Process file

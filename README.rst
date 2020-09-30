@@ -1,0 +1,5 @@
+======
+README
+======
+
+**django-ebook-manager**

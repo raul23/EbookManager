@@ -167,6 +167,9 @@ class AbstractBook(models.Model):
 
 
 class Book(AbstractBook):
+    class Meta:
+        ordering = ['title', 'pub_year']
+
     class BookFormat(models.TextChoices):
         Hardcover = 'H'
         Kindle = 'K'
@@ -384,16 +387,3 @@ class Tag(UniqueErrorMessage):
 
     def __str__(self):
         return "{} [{}]".format(self.tag, self.get_source_display())
-
-
-"""
-<form action="{% url 'ebook-manager:upload_files' %}" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <div class="form-group">
-    <label for="UploadFiles">Add ebooks:</label>
-    <input type="file" name="files" class="form-control-file" id="UploadFiles" multiple>
-    <input type="submit" value="Upload">
-  </div>
-</form>
-
-"""

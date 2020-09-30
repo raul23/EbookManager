@@ -16,7 +16,7 @@ with open(os.path.join(dirpath, "README.rst")) as f:
     README = f.read()
 
 # TODO: get the version programmatically
-setup(name='EbookManager',
+setup(name='django-ebook-manager',
       version='0.1',
       description='Python Ebook Manager',
       long_description=README,
@@ -25,15 +25,14 @@ setup(name='EbookManager',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Topic :: Software Development :: Libraries'
       ],
       keywords='ebook manager',
-      url='https://github.com/raul23/EbookManager',
+      url='https://github.com/raul23/django-ebook-manager',
       author='Raul C.',
       author_email='rchfe23@gmail.com',
       license='GPLv3',
       packages=find_packages(exclude=['tests']),
       entry_points={
-        'console_scripts': ['ebook-tools=ebook_manager.scripts.tools:main']
+        'console_scripts': ['db_ebooks=ebook_manager.scripts.db_ebooks:main']
       },
       zip_safe=False)

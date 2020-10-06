@@ -2,4 +2,4 @@
 README
 ======
 
-**django-ebook-manager**: django application
+**django-ebook-manager**
